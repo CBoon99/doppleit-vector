@@ -1,15 +1,433 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cindara Vector</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cindara Vector</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #6B728E 0%, #A084CA 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        h1 {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 10px;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        button, select, input[type="color"], input[type="number"] {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        button:hover, select:hover, input[type="color"]:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+        button.active, button:active {
+            background: #A084CA;
+            transform: translateY(0);
+        }
+        input[type="number"] {
+            width: 60px;
+        }
+        .canvas-container {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            height: 400px;
+            position: relative;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+        }
+        .layers {
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+        }
+        .layer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .section {
+                padding: 10px;
+            }
+            button, select, input[type="color"], input[type="number"] {
+                padding: 6px 10px;
+                font-size: 0.85rem;
+            }
+            .canvas-container {
+                height: 300px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <img src="logo.png" alt="Cindara Logo" class="logo">
-  <h1>Cindara Vector</h1>
-  <p>Free Vectorization Tool — Fast. Clean. Yours.</p>
+    <h1>Cindara Vector</h1>
+
+    <!-- Toolbar Section -->
+    <div class="section" id="toolbar">
+        <h2>Toolbar</h2>
+        <div class="controls">
+            <button id="tool-pen" class="active">Pen</button>
+            <button id="tool-shape">Shape</button>
+            <button id="tool-eraser">Eraser</button>
+            <input type="color" id="color-picker" value="#A084CA">
+            <input type="number" id="stroke-width" min="1" value="2">
+            <button id="zoom-in">Zoom In</button>
+            <button id="zoom-out">Zoom Out</button>
+        </div>
+    </div>
+
+    <!-- Canvas and Layers Section -->
+    <div class="section" id="canvas-section">
+        <h2>Canvas</h2>
+        <div class="canvas-container">
+            <canvas id="vector-canvas"></canvas>
+        </div>
+        <div class="section" id="layers">
+            <h2>Layers</h2>
+            <div class="layers" id="layer-list"></div>
+        </div>
+    </div>
+
+    <!-- Timeline Section -->
+    <div class="section" id="timeline">
+        <h2>Timeline</h2>
+        <div class="controls">
+            <button id="undo" disabled>Undo</button>
+            <button id="redo" disabled>Redo</button>
+            <button id="clear">Clear Canvas</button>
+        </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="section" id="export">
+        <h2>Export</h2>
+        <div class="controls">
+            <button id="export-svg">SVG</button>
+            <button id="export-png">PNG</button>
+            <button id="export-json">JSON</button>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let tool = 'pen';
+        let color = '#A084CA';
+        let strokeWidth = 2;
+        let zoom = 1;
+        let paths = [];
+        let currentPath = null;
+        let layers = [];
+        let history = [];
+        let historyIndex = -1;
+        let isDrawing = false;
+
+        // DOM Elements
+        const toolPen = document.getElementById('tool-pen');
+        const toolShape = document.getElementById('tool-shape');
+        const toolEraser = document.getElementById('tool-eraser');
+        const colorPicker = document.getElementById('color-picker');
+        const strokeWidthInput = document.getElementById('stroke-width');
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        const undoBtn = document.getElementById('undo');
+        const redoBtn = document.getElementById('redo');
+        const clearBtn = document.getElementById('clear');
+        const exportSvgBtn = document.getElementById('export-svg');
+        const exportPngBtn = document.getElementById('export-png');
+        const exportJsonBtn = document.getElementById('export-json');
+        const canvas = document.getElementById('vector-canvas');
+        const ctx = canvas.getContext('2d');
+        const layerList = document.getElementById('layer-list');
+
+        // Canvas Setup
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        // Layer Management
+        function addLayer() {
+            const layer = { id: layers.length, paths: [] };
+            layers.push(layer);
+            updateLayerList();
+            return layer;
+        }
+
+        function updateLayerList() {
+            layerList.innerHTML = '';
+            layers.forEach(layer => {
+                const div = document.createElement('div');
+                div.className = 'layer';
+                div.innerHTML = `Layer ${layer.id + 1} <button onclick="deleteLayer(${layer.id})">Delete</button>`;
+                layerList.appendChild(div);
+            });
+        }
+
+        window.deleteLayer = function(id) {
+            layers = layers.filter(layer => layer.id !== id);
+            updateLayerList();
+            redraw();
+            saveState();
+        };
+
+        // History Management
+        function saveState() {
+            history = history.slice(0, historyIndex + 1);
+            history.push(JSON.stringify({ layers, zoom, tool, color, strokeWidth }));
+            historyIndex++;
+            updateHistoryButtons();
+        }
+
+        function updateHistoryButtons() {
+            undoBtn.disabled = historyIndex <= 0;
+            redoBtn.disabled = historyIndex >= history.length - 1;
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                applyState(JSON.parse(history[historyIndex]));
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                applyState(JSON.parse(history[historyIndex]));
+            }
+        }
+
+        function applyState(state) {
+            layers = state.layers;
+            zoom = state.zoom;
+            tool = state.tool;
+            color = state.color;
+            strokeWidth = state.strokeWidth;
+
+            toolPen.classList.toggle('active', tool === 'pen');
+            toolShape.classList.toggle('active', tool === 'shape');
+            toolEraser.classList.toggle('active', tool === 'eraser');
+            colorPicker.value = color;
+            strokeWidthInput.value = strokeWidth;
+
+            updateLayerList();
+            redraw();
+            updateHistoryButtons();
+        }
+
+        // Drawing Logic
+        function redraw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.scale(zoom, zoom);
+            layers.forEach(layer => {
+                layer.paths.forEach(path => {
+                    ctx.beginPath();
+                    ctx.strokeStyle = path.color;
+                    ctx.lineWidth = path.strokeWidth;
+                    path.points.forEach((point, i) => {
+                        if (i === 0) ctx.moveTo(point.x, point.y);
+                        else ctx.lineTo(point.x, point.y);
+                    });
+                    ctx.stroke();
+                });
+            });
+            ctx.restore();
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (e.clientX - rect.left) / zoom,
+                y: (e.clientY - rect.top) / zoom
+            };
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (tool === 'eraser') return;
+            isDrawing = true;
+            const pos = getMousePos(e);
+            currentPath = { color, strokeWidth, points: [pos] };
+            if (!layers.length) addLayer();
+            layers[layers.length - 1].paths.push(currentPath);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+            const pos = getMousePos(e);
+            if (tool === 'pen') {
+                currentPath.points.push(pos);
+            } else if (tool === 'shape') {
+                currentPath.points = [currentPath.points[0], pos];
+            }
+            redraw();
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+            saveState();
+        });
+
+        canvas.addEventListener('click', (e) => {
+            if (tool !== 'eraser') return;
+            const pos = getMousePos(e);
+            layers.forEach(layer => {
+                layer.paths = layer.paths.filter(path => {
+                    return !path.points.some(point => {
+                        return Math.hypot(point.x - pos.x, point.y - pos.y) < 10;
+                    });
+                });
+            });
+            redraw();
+            saveState();
+        });
+
+        // Event Listeners
+        toolPen.addEventListener('click', () => {
+            tool = 'pen';
+            toolPen.classList.add('active');
+            toolShape.classList.remove('active');
+            toolEraser.classList.remove('active');
+            saveState();
+        });
+
+        toolShape.addEventListener('click', () => {
+            tool = 'shape';
+            toolShape.classList.add('active');
+            toolPen.classList.remove('active');
+            toolEraser.classList.remove('active');
+            saveState();
+        });
+
+        toolEraser.addEventListener('click', () => {
+            tool = 'eraser';
+            toolEraser.classList.add('active');
+            toolPen.classList.remove('active');
+            toolShape.classList.remove('active');
+            saveState();
+        });
+
+        colorPicker.addEventListener('change', () => {
+            color = colorPicker.value;
+            saveState();
+        });
+
+        strokeWidthInput.addEventListener('input', () => {
+            strokeWidth = parseInt(strokeWidthInput.value);
+            saveState();
+        });
+
+        zoomInBtn.addEventListener('click', () => {
+            zoom *= 1.1;
+            redraw();
+            saveState();
+        });
+
+        zoomOutBtn.addEventListener('click', () => {
+            zoom /= 1.1;
+            redraw();
+            saveState();
+        });
+
+        undoBtn.addEventListener('click', undo);
+        redoBtn.addEventListener('click', redo);
+
+        clearBtn.addEventListener('click', () => {
+            layers = [];
+            updateLayerList();
+            redraw();
+            saveState();
+        });
+
+        exportSvgBtn.addEventListener('click', () => {
+            const svg = `<svg width="${canvas.width}" height="${canvas.height}" xmlns="http://www.w3.org/2000/svg">` +
+                layers.map(layer => layer.paths.map(path => {
+                    const points = path.points.map(p => `${p.x},${p.y}`).join(' ');
+                    return `<polyline points="${points}" stroke="${path.color}" stroke-width="${path.strokeWidth}" fill="none"/>`;
+                }).join('')).join('') + '</svg>';
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'vector.svg';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        exportPngBtn.addEventListener('click', () => {
+            const url = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'vector.png';
+            a.click();
+        });
+
+        exportJsonBtn.addEventListener('click', () => {
+            const data = JSON.stringify(layers);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'vector.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Initial Setup
+        addLayer();
+        saveState();
+        redraw();
+    </script>
 </body>
 </html>
