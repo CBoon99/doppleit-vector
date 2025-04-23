@@ -1,20 +1,868 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cindara Vector</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        /* CSS styles go here */
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cindara Vector</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #A084CA, #6B728E);
+      color: #1A1E2E;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    body.dark {
+      background: linear-gradient(135deg, #8A6CB4, #5A6373);
+      color: #E0E0E0;
+    }
+    header {
+      padding: 1rem 2rem;
+      background: rgba(255, 255, 255, 0.15);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(10px);
+    }
+    body.dark header {
+      background: rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    header p {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 1rem 2rem;
+      background: rgba(255, 255, 255, 0.15);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+    }
+    body.dark .toolbar {
+      background: rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .toolbar button, .toolbar select, .toolbar input {
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, #A084CA, #6B728E);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(107, 115, 255, 0.3);
+    }
+    body.dark .toolbar button,
+    body.dark .toolbar select,
+    body.dark .toolbar input {
+      background: linear-gradient(135deg, #8A6CB4, #5A6373);
+      box-shadow: 0 4px 8px rgba(107, 115, 255, 0.2);
+    }
+    .toolbar button:hover, .toolbar select:hover, .toolbar input:hover {
+      background: linear-gradient(135deg, #B294DA, #7B829E);
+      transform: scale(1.05);
+      filter: brightness(1.15);
+    }
+    body.dark .toolbar button:hover,
+    body.dark .toolbar select:hover,
+    body.dark .toolbar input:hover {
+      background: linear-gradient(135deg, #9A7CC4, #6A7383);
+      filter: brightness(1.05);
+    }
+    .toolbar button.active {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+    .toolbar button:focus, .toolbar select:focus, .toolbar input:focus {
+      outline: 2px solid #A084CA;
+      outline-offset: 2px;
+    }
+    body.dark .toolbar button:focus,
+    body.dark .toolbar select:focus,
+    body.dark .toolbar input:focus {
+      outline-color: #9A7CC4;
+    }
+    .color-picker {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    #colorPreview {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    .recent-colors {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .recent-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+    }
+    #canvas-container {
+      flex-grow: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+    canvas {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      max-width: 90vw;
+      max-height: 90vh;
+      width: 100%;
+      height: auto;
+      touch-action: none;
+    }
+    #svg-preview {
+      position: fixed;
+      top: 0;
+      right: -400px;
+      width: 400px;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-left: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 1rem;
+      transition: right 0.3s ease;
+      overflow-y: auto;
+    }
+    body.dark #svg-preview {
+      background: rgba(255, 255, 255, 0.1);
+      border-left: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    #svg-preview.open {
+      right: 0;
+    }
+    #svg-preview h3 {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    #svg-preview-content {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem;
+      max-height: 80vh;
+      overflow: auto;
+      transform-origin: center;
+    }
+    #svg-preview-close {
+      position: absolute;
+      top: 1rem;
+      left: -40px;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #A084CA, #6B728E);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    body.dark #svg-preview-close {
+      background: linear-gradient(135deg, #8A6CB4, #5A6373);
+    }
+    footer {
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+    @media (max-width: 768px) {
+      header {
+        padding: 0.75rem 1rem;
+      }
+      header h1 {
+        font-size: 1.25rem;
+      }
+      header p {
+        font-size: 0.8rem;
+      }
+      .toolbar {
+        padding: 0.75rem 1rem;
+        gap: 0.4rem;
+      }
+      .toolbar button, .toolbar select, .toolbar input {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+      }
+      .recent-colors {
+        gap: 0.3rem;
+      }
+      .recent-color {
+        width: 18px;
+        height: 18px;
+      }
+      #canvas-container {
+        padding: 1rem;
+      }
+      canvas {
+        max-width: 95vw;
+        max-height: 80vh;
+      }
+      #svg-preview {
+        width: 100%;
+        right: -100%;
+      }
+      #svg-preview.open {
+        right: 0;
+      }
+      #svg-preview-close {
+        left: -36px;
+        width: 36px;
+        height: 36px;
+      }
+    }
+    @media (max-width: 400px) {
+      .toolbar button, .toolbar select, .toolbar input {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.75rem;
+      }
+    }
+  </style>
 </head>
 <body>
-    <!-- HTML structure goes here -->
-    <script>
-        // JavaScript logic goes here
-    </script>
+  <header>
+    <h1>Cindara Vector</h1>
+    <p>Suite Edition v1.0.1</p>
+  </header>
+
+  <div class="toolbar" role="toolbar" aria-label="Drawing Tools">
+    <button id="pen-tool" onclick="CindaraVector.setTool('pen')" aria-label="Pen Tool">Pen</button>
+    <button id="rect-tool" onclick="CindaraVector.setTool('rect')" aria-label="Rectangle Tool">Rectangle</button>
+    <button id="circle-tool" onclick="CindaraVector.setTool('circle')" aria-label="Circle Tool">Circle</button>
+    <button id="eraser-tool" onclick="CindaraVector.setTool('eraser')" aria-label="Eraser Tool">Eraser</button>
+    <select id="fill-mode" aria-label="Fill Mode">
+      <option value="stroke">Stroke</option>
+      <option value="fill">Fill</option>
+    </select>
+    <div class="color-picker" role="group" aria-label="Color Picker">
+      <button id="colorPickerBtn" aria-label="Open Color Picker">Color</button>
+      <div id="colorPreview"></div>
+      <div class="recent-colors" id="recentColors"></div>
+    </div>
+    <input type="range" id="strokeWidth" min="1" max="20" value="2" aria-label="Stroke Width">
+    <button id="snap-grid" onclick="CindaraVector.toggleSnapGrid()" aria-label="Toggle Snap to Grid">Snap: Off</button>
+    <button onclick="CindaraVector.undo()" aria-label="Undo">Undo</button>
+    <button onclick="CindaraVector.redo()" aria-label="Redo">Redo</button>
+    <button onclick="CindaraVector.clearCanvas()" aria-label="Clear Canvas">Clear</button>
+    <button onclick="CindaraVector.toggleSVGPreview()" aria-label="Toggle SVG Preview">SVG Preview</button>
+    <button onclick="CindaraVector.downloadSVG()" aria-label="Export SVG">Export SVG</button>
+    <button id="dark-mode" aria-label="Toggle Dark Mode">Dark Mode: Off</button>
+  </div>
+
+  <div id="canvas-container" role="region" aria-label="Drawing Canvas">
+    <canvas id="vectorCanvas"></canvas>
+  </div>
+
+  <div id="svg-preview" role="dialog" aria-label="SVG Preview">
+    <button id="svg-preview-close" aria-label="Close SVG Preview">×</button>
+    <h3>SVG Preview</h3>
+    <div id="svg-preview-content"></div>
+  </div>
+
+  <footer>
+    <p><em>Draw the path. Shape the future.<br>
+    The canvas is yours.</em><br>
+    —The Cindara Family</p>
+    <p>Cindara Vector © 2025</p>
+  </footer>
+
+  <script>
+    const CindaraVector = {
+      _state: {
+        tool: 'pen',
+        fillMode: 'stroke',
+        color: '#000000',
+        strokeWidth: 2,
+        isDrawing: false,
+        currentShape: null,
+        shapes: [],
+        history: [],
+        historyIndex: -1,
+        isDarkMode: false,
+        canvasWidth: 0,
+        canvasHeight: 0,
+        startPoint: null,
+        snapGrid: false,
+        recentColors: [],
+        lastPoint: null,
+        touchTolerance: 5
+      },
+      UI: {
+        canvas: document.getElementById('vectorCanvas'),
+        ctx: null,
+        toolbar: document.querySelector('.toolbar'),
+        penTool: document.getElementById('pen-tool'),
+        rectTool: document.getElementById('rect-tool'),
+        circleTool: document.getElementById('circle-tool'),
+        eraserTool: document.getElementById('eraser-tool'),
+        fillMode: document.getElementById('fill-mode'),
+        colorPickerBtn: document.getElementById('colorPickerBtn'),
+        colorPreview: document.getElementById('colorPreview'),
+        recentColors: document.getElementById('recentColors'),
+        strokeWidth: document.getElementById('strokeWidth'),
+        snapGridBtn: document.getElementById('snap-grid'),
+        darkModeBtn: document.getElementById('dark-mode'),
+        svgPreview: document.getElementById('svg-preview'),
+        svgPreviewContent: document.getElementById('svg-preview-content'),
+        svgPreviewClose: document.getElementById('svg-preview-close'),
+        liveRegion: null,
+        init: () => {
+          CindaraVector.UI.ctx = CindaraVector.UI.canvas.getContext('2d');
+          CindaraVector.UI.liveRegion = document.createElement('div');
+          CindaraVector.UI.liveRegion.setAttribute('aria-live', 'polite');
+          CindaraVector.UI.liveRegion.style.position = 'absolute';
+          CindaraVector.UI.liveRegion.style.left = '-9999px';
+          document.body.appendChild(CindaraVector.UI.liveRegion);
+          CindaraVector.UI.resizeCanvas();
+          CindaraVector.UI.bindEvents();
+          CindaraVector.UI.loadTheme();
+          CindaraVector.UI.loadRecentColors();
+          CindaraVector.UI.updateToolUI();
+          CindaraVector.UI.colorPreview.style.backgroundColor = CindaraVector._state.color;
+          window.addEventListener('resize', CindaraVector.UI.resizeCanvas);
+          window.addEventListener('orientationchange', CindaraVector.UI.resizeCanvas);
+        },
+        resizeCanvas: () => {
+          const container = document.getElementById('canvas-container');
+          const maxWidth = container.clientWidth * 0.9;
+          const maxHeight = window.innerHeight * 0.8;
+          const aspectRatio = 4 / 3;
+          let width = maxWidth;
+          let height = width / aspectRatio;
+          if (height > maxHeight) {
+            height = maxHeight;
+            width = height * aspectRatio;
+          }
+          CindaraVector._state.canvasWidth = width;
+          CindaraVector._state.canvasHeight = height;
+          CindaraVector.UI.canvas.width = width * window.devicePixelRatio;
+          CindaraVector.UI.canvas.height = height * window.devicePixelRatio;
+          CindaraVector.UI.canvas.style.width = `${width}px`;
+          CindaraVector.UI.canvas.style.height = `${height}px`;
+          CindaraVector.UI.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+          CindaraVector.UI.redraw();
+        },
+        bindEvents: () => {
+          const getPoint = (e) => {
+            const rect = CindaraVector.UI.canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            let x = (clientX - rect.left) * CindaraVector._state.canvasWidth / rect.width;
+            let y = (clientY - rect.top) * CindaraVector._state.canvasHeight / rect.height;
+            if (CindaraVector._state.snapGrid) {
+              const gridSize = 10;
+              x = Math.round(x / gridSize) * gridSize;
+              y = Math.round(y / gridSize) * gridSize;
+            }
+            return { x, y };
+          };
+          const shouldMove = (point) => {
+            if (!CindaraVector._state.lastPoint) return true;
+            const dx = point.x - CindaraVector._state.lastPoint.x;
+            const dy = point.y - CindaraVector._state.lastPoint.y;
+            return Math.sqrt(dx * dx + dy * dy) > CindaraVector._state.touchTolerance;
+          };
+          CindaraVector.UI.canvas.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            CindaraVector._state.isDrawing = true;
+            const point = getPoint(e);
+            CindaraVector._state.startPoint = point;
+            CindaraVector._state.lastPoint = point;
+            if (CindaraVector._state.tool === 'pen') {
+              CindaraVector._state.currentShape = {
+                type: 'pen',
+                points: [point],
+                color: CindaraVector._state.color,
+                strokeWidth: CindaraVector._state.strokeWidth,
+                fillMode: CindaraVector._state.fillMode
+              };
+            } else if (CindaraVector._state.tool === 'rect' || CindaraVector._state.tool === 'circle') {
+              CindaraVector._state.currentShape = {
+                type: CindaraVector._state.tool,
+                start: point,
+                end: point,
+                color: CindaraVector._state.color,
+                strokeWidth: CindaraVector._state.strokeWidth,
+                fillMode: CindaraVector._state.fillMode
+              };
+            } else if (CindaraVector._state.tool === 'eraser') {
+              CindaraVector.UI.erase(point);
+            }
+          });
+          CindaraVector.UI.canvas.addEventListener('mousemove', (e) => {
+            if (!CindaraVector._state.isDrawing) return;
+            const point = getPoint(e);
+            if (!shouldMove(point)) return;
+            CindaraVector._state.lastPoint = point;
+            if (CindaraVector._state.tool === 'pen' && CindaraVector._state.currentShape) {
+              CindaraVector._state.currentShape.points.push(point);
+              CindaraVector.UI.redraw();
+            } else if ((CindaraVector._state.tool === 'rect' || CindaraVector._state.tool === 'circle') && CindaraVector._state.currentShape) {
+              CindaraVector._state.currentShape.end = point;
+              CindaraVector.UI.redraw();
+            } else if (CindaraVector._state.tool === 'eraser') {
+              CindaraVector.UI.erase(point);
+            }
+          });
+          CindaraVector.UI.canvas.addEventListener('mouseup', () => {
+            if (CindaraVector._state.currentShape) {
+              CindaraVector._state.shapes.push(CindaraVector._state.currentShape);
+              CindaraVector._state.history = CindaraVector._state.history.slice(0, CindaraVector._state.historyIndex + 1);
+              CindaraVector._state.history.push([...CindaraVector._state.shapes]);
+              CindaraVector._state.historyIndex++;
+              if (CindaraVector._state.history.length > 50) {
+                CindaraVector._state.history.shift();
+                CindaraVector._state.historyIndex--;
+              }
+              CindaraVector.UI.addRecentColor(CindaraVector._state.currentShape.color);
+              CindaraVector._state.currentShape = null;
+              CindaraVector.UI.updateSVGPreview();
+            }
+            CindaraVector._state.isDrawing = false;
+            CindaraVector._state.lastPoint = null;
+          });
+          CindaraVector.UI.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            CindaraVector.UI.canvas.dispatchEvent(new MouseEvent('mousedown', {
+              clientX: e.touches[0].clientX,
+              clientY: e.touches[0].clientY
+            }));
+          });
+          CindaraVector.UI.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            CindaraVector.UI.canvas.dispatchEvent(new MouseEvent('mousemove', {
+              clientX: e.touches[0].clientX,
+              clientY: e.touches[0].clientY
+            }));
+          });
+          CindaraVector.UI.canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            CindaraVector.UI.canvas.dispatchEvent(new MouseEvent('mouseup'));
+          });
+          CindaraVector.UI.fillMode.addEventListener('change', (e) => {
+            CindaraVector._state.fillMode = e.target.value;
+          });
+          CindaraVector.UI.strokeWidth.addEventListener('input', (e) => {
+            CindaraVector._state.strokeWidth = parseFloat(e.target.value);
+          });
+          CindaraVector.UI.colorPickerBtn.addEventListener('click', () => {
+            CindaraVector.UI.showColorPicker();
+          });
+          CindaraVector.UI.darkModeBtn.addEventListener('click', () => {
+            CindaraVector._state.isDarkMode = !CindaraVector._state.isDarkMode;
+            document.body.classList.toggle('dark', CindaraVector._state.isDarkMode);
+            CindaraVector.UI.darkModeBtn.textContent = `Dark Mode: ${CindaraVector._state.isDarkMode ? 'On' : 'Off'}`;
+            localStorage.setItem('cindara-vector-theme', JSON.stringify({ isDarkMode: CindaraVector._state.isDarkMode }));
+          });
+          CindaraVector.UI.snapGridBtn.addEventListener('click', () => {
+            CindaraVector.toggleSnapGrid();
+          });
+          CindaraVector.UI.svgPreviewClose.addEventListener('click', () => {
+            CindaraVector.UI.svgPreview.classList.remove('open');
+          });
+          CindaraVector.UI.toolbar.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.target.click();
+            }
+          });
+          document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'z') {
+              e.preventDefault();
+              CindaraVector.undo();
+            } else if (e.ctrlKey && e.key === 'y') {
+              e.preventDefault();
+              CindaraVector.redo();
+            }
+          });
+          let pinchStartDistance = null;
+          let currentScale = 1;
+          CindaraVector.UI.svgPreviewContent.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+              const dx = e.touches[0].clientX - e.touches[1].clientX;
+              const dy = e.touches[0].clientY - e.touches[1].clientY;
+              pinchStartDistance = Math.sqrt(dx * dx + dy * dy);
+            }
+          });
+          CindaraVector.UI.svgPreviewContent.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && pinchStartDistance) {
+              const dx = e.touches[0].clientX - e.touches[1].clientX;
+              const dy = e.touches[0].clientY - e.touches[1].clientY;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              const scale = distance / pinchStartDistance;
+              currentScale = Math.max(0.5, Math.min(3, currentScale * scale));
+              CindaraVector.UI.svgPreviewContent.style.transform = `scale(${currentScale})`;
+              pinchStartDistance = distance;
+            }
+          });
+          CindaraVector.UI.svgPreviewContent.addEventListener('touchend', () => {
+            pinchStartDistance = null;
+          });
+          CindaraVector.UI.svgPreviewContent.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            currentScale = Math.max(0.5, Math.min(3, currentScale + (e.deltaY > 0 ? -0.1 : 0.1)));
+            CindaraVector.UI.svgPreviewContent.style.transform = `scale(${currentScale})`;
+          });
+        },
+        loadTheme: () => {
+          const saved = localStorage.getItem('cindara-vector-theme');
+          if (saved) {
+            const { isDarkMode } = JSON.parse(saved);
+            CindaraVector._state.isDarkMode = isDarkMode;
+            document.body.classList.toggle('dark', isDarkMode);
+            CindaraVector.UI.darkModeBtn.textContent = `Dark Mode: ${isDarkMode ? 'On' : 'Off'}`;
+          }
+        },
+        loadRecentColors: () => {
+          const saved = localStorage.getItem('cindara-vector-recent-colors');
+          if (saved) {
+            CindaraVector._state.recentColors = JSON.parse(saved);
+            CindaraVector._state.recentColors.forEach(color => {
+              const div = document.createElement('div');
+              div.classList.add('recent-color');
+              div.style.backgroundColor = color;
+              div.setAttribute('aria-label', `Select color ${color}`);
+              div.addEventListener('click', () => {
+                CindaraVector._state.color = color;
+                CindaraVector.UI.colorPreview.style.backgroundColor = color;
+              });
+              CindaraVector.UI.recentColors.appendChild(div);
+            });
+          }
+        },
+        addRecentColor: (color) => {
+          if (!CindaraVector._state.recentColors.includes(color)) {
+            CindaraVector._state.recentColors.unshift(color);
+            if (CindaraVector._state.recentColors.length > 5) {
+              CindaraVector._state.recentColors.pop();
+            }
+            localStorage.setItem('cindara-vector-recent-colors', JSON.stringify(CindaraVector._state.recentColors));
+            CindaraVector.UI.recentColors.innerHTML = '';
+            CindaraVector._state.recentColors.forEach(c => {
+              const div = document.createElement('div');
+              div.classList.add('recent-color');
+              div.style.backgroundColor = c;
+              div.setAttribute('aria-label', `Select color ${c}`);
+              div.addEventListener('click', () => {
+                CindaraVector._state.color = c;
+                CindaraVector.UI.colorPreview.style.backgroundColor = c;
+              });
+              CindaraVector.UI.recentColors.appendChild(div);
+            });
+          }
+        },
+        updateToolUI: () => {
+          [CindaraVector.UI.penTool, CindaraVector.UI.rectTool, CindaraVector.UI.circleTool, CindaraVector.UI.eraserTool].forEach(btn => {
+            btn.classList.toggle('active', btn.id === `${CindaraVector._state.tool}-tool`);
+          });
+          CindaraVector.UI.canvas.style.cursor = CindaraVector._state.tool === 'pen' ? 'crosshair' : CindaraVector._state.tool === 'eraser' ? 'cell' : 'default';
+          CindaraVector.UI.liveRegion.textContent = `Selected tool: ${CindaraVector._state.tool}`;
+        },
+        redraw: () => {
+          CindaraVector.UI.ctx.clearRect(0, 0, CindaraVector._state.canvasWidth, CindaraVector._state.canvasHeight);
+          CindaraVector.UI.ctx.lineJoin = 'round';
+          CindaraVector.UI.ctx.lineCap = 'round';
+          CindaraVector._state.shapes.forEach(shape => {
+            CindaraVector.UI.drawShape(shape);
+          });
+          if (CindaraVector._state.currentShape) {
+            CindaraVector.UI.drawShape(CindaraVector._state.currentShape);
+          }
+        },
+        drawShape: (shape) => {
+          const ctx = CindaraVector.UI.ctx;
+          ctx.strokeStyle = shape.color;
+          ctx.fillStyle = shape.color;
+          ctx.lineWidth = shape.strokeWidth;
+          ctx.beginPath();
+          if (shape.type === 'pen') {
+            shape.points.forEach((pt, i) => {
+              if (i === 0) ctx.moveTo(pt.x, pt.y);
+              else ctx.lineTo(pt.x, pt.y);
+            });
+            if (shape.fillMode === 'fill' && shape.points.length > 2) {
+              ctx.closePath();
+              ctx.fill();
+            } else {
+              ctx.stroke();
+            }
+          } else if (shape.type === 'rect') {
+            const x = Math.min(shape.start.x, shape.end.x);
+            const y = Math.min(shape.start.y, shape.end.y);
+            const w = Math.abs(shape.end.x - shape.start.x);
+            const h = Math.abs(shape.end.y - shape.start.y);
+            if (shape.fillMode === 'fill') {
+              ctx.fillRect(x, y, w, h);
+            } else {
+              ctx.strokeRect(x, y, w, h);
+            }
+          } else if (shape.type === 'circle') {
+            const cx = (shape.start.x + shape.end.x) / 2;
+            const cy = (shape.start.y + shape.end.y) / 2;
+            const rx = Math.abs(shape.end.x - shape.start.x) / 2;
+            const ry = Math.abs(shape.end.y - shape.start.y) / 2;
+            ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+            if (shape.fillMode === 'fill') {
+              ctx.fill();
+            } else {
+              ctx.stroke();
+            }
+          }
+        },
+        erase: (point) => {
+          const hitRadius = CindaraVector._state.strokeWidth * 2;
+          CindaraVector._state.shapes = CindaraVector._state.shapes.filter(shape => {
+            if (shape.type === 'pen') {
+              return !shape.points.some(pt => {
+                const dx = pt.x - point.x;
+                const dy = pt.y - point.y;
+                return Math.sqrt(dx * dx + dy * dy) < hitRadius;
+              });
+            } else if (shape.type === 'rect') {
+              const x = Math.min(shape.start.x, shape.end.x);
+              const y = Math.min(shape.start.y, shape.end.y);
+              const w = Math.abs(shape.end.x - shape.start.x);
+              const h = Math.abs(shape.end.y - shape.start.y);
+              return !(point.x >= x && point.x <= x + w && point.y >= y && point.y <= y + h);
+            } else if (shape.type === 'circle') {
+              const cx = (shape.start.x + shape.end.x) / 2;
+              const cy = (shape.start.y + shape.end.y) / 2;
+              const rx = Math.abs(shape.end.x - shape.start.x) / 2;
+              const ry = Math.abs(shape.end.y - shape.start.y) / 2;
+              const dx = point.x - cx;
+              const dy = point.y - cy;
+              return (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry) > 1;
+            }
+            return true;
+          });
+          CindaraVector._state.history = CindaraVector._state.history.slice(0, CindaraVector._state.historyIndex + 1);
+          CindaraVector._state.history.push([...CindaraVector._state.shapes]);
+          CindaraVector._state.historyIndex++;
+          if (CindaraVector._state.history.length > 50) {
+            CindaraVector._state.history.shift();
+            CindaraVector._state.historyIndex--;
+          }
+          CindaraVector.UI.redraw();
+          CindaraVector.UI.updateSVGPreview();
+        },
+        showColorPicker: () => {
+          const picker = document.createElement('div');
+          picker.style.position = 'fixed';
+          picker.style.top = '50%';
+          picker.style.left = '50%';
+          picker.style.transform = 'translate(-50%, -50%)';
+          picker.style.background = 'rgba(255, 255, 255, 0.95)';
+          picker.style.borderRadius = '12px';
+          picker.style.padding = '1rem';
+          picker.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+          picker.style.zIndex = '1000';
+          picker.innerHTML = `
+            <div style="width: 200px; height: 150px; background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, red, yellow, green, cyan, blue, magenta, red); cursor: crosshair;" id="hsl-spectrum"></div>
+            <input type="range" id="lightness" min="0" max="100" value="50" style="width: 200px; margin-top: 0.5rem;" aria-label="Lightness">
+            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+              <button id="color-ok" style="padding: 0.5rem 1rem; background: linear-gradient(135deg, #A084CA, #6B728E); color: #fff; border: none; border-radius: 8px;">OK</button>
+              <button id="color-cancel" style="padding: 0.5rem 1rem; background: linear-gradient(135deg, #A084CA, #6B728E); color: #fff; border: none; border-radius: 8px;">Cancel</button>
+            </div>
+          `;
+          document.body.appendChild(picker);
+          const spectrum = picker.querySelector('#hsl-spectrum');
+          const lightness = picker.querySelector('#lightness');
+          let hue = 0, saturation = 100, lightnessValue = 50;
+          const updateColor = () => {
+            const color = `hsl(${hue}, ${saturation}%, ${lightnessValue}%)`;
+            CindaraVector._state.color = color;
+            CindaraVector.UI.colorPreview.style.backgroundColor = color;
+          };
+          spectrum.addEventListener('mousedown', (e) => {
+            const rect = spectrum.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width;
+            const y = (rect.height - (e.clientY - rect.top)) / rect.height;
+            hue = x * 360;
+            saturation = y * 100;
+            updateColor();
+            const move = (ev) => {
+              const x = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+              const y = Math.max(0, Math.min(1, (rect.height - (ev.clientY - rect.top)) / rect.height));
+              hue = x * 360;
+              saturation = y * 100;
+              updateColor();
+            };
+            document.addEventListener('mousemove', move);
+            document.addEventListener('mouseup', () => {
+              document.removeEventListener('mousemove', move);
+            }, { once: true });
+          });
+          spectrum.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const rect = spectrum.getBoundingClientRect();
+            const x = (e.touches[0].clientX - rect.left) / rect.width;
+            const y = (rect.height - (e.touches[0].clientY - rect.top)) / rect.height;
+            hue = x * 360;
+            saturation = y * 100;
+            updateColor();
+            const move = (ev) => {
+              ev.preventDefault();
+              const x = Math.max(0, Math.min(1, (ev.touches[0].clientX - rect.left) / rect.width));
+              const y = Math.max(0, Math.min(1, (rect.height - (ev.touches[0].clientY - rect.top)) / rect.height));
+              hue = x * 360;
+              saturation = y * 100;
+              updateColor();
+            };
+            document.addEventListener('touchmove', move);
+            document.addEventListener('touchend', () => {
+              document.removeEventListener('touchmove', move);
+            }, { once: true });
+          });
+          lightness.addEventListener('input', (e) => {
+            lightnessValue = parseFloat(e.target.value);
+            updateColor();
+          });
+          picker.querySelector('#color-ok').addEventListener('click', () => {
+            CindaraVector.UI.addRecentColor(CindaraVector._state.color);
+            document.body.removeChild(picker);
+          });
+          picker.querySelector('#color-cancel').addEventListener('click', () => {
+            CindaraVector._state.color = '#000000';
+            CindaraVector.UI.colorPreview.style.backgroundColor = CindaraVector._state.color;
+            document.body.removeChild(picker);
+          });
+          document.addEventListener('click', (e) => {
+            if (!picker.contains(e.target) && e.target !== CindaraVector.UI.colorPickerBtn) {
+              document.body.removeChild(picker);
+            }
+          }, { once: true });
+        },
+        updateSVGPreview: () => {
+          let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${CindaraVector._state.canvasWidth}" height="${CindaraVector._state.canvasHeight}" style="background: #fff;">`;
+          CindaraVector._state.shapes.forEach(shape => {
+            if (shape.type === 'pen') {
+              const d = shape.points.map((pt, i) => `${i === 0 ? 'M' : 'L'}${pt.x},${pt.y}`).join(' ');
+              svg += `<path d="${d}" stroke="${shape.color}" fill="${shape.fillMode === 'fill' ? shape.color : 'none'}" stroke-width="${shape.strokeWidth}"/>`;
+            } else if (shape.type === 'rect') {
+              const x = Math.min(shape.start.x, shape.end.x);
+              const y = Math.min(shape.start.y, shape.end.y);
+              const w = Math.abs(shape.end.x - shape.start.x);
+              const h = Math.abs(shape.end.y - shape.start.y);
+              svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" stroke="${shape.color}" fill="${shape.fillMode === 'fill' ? shape.color : 'none'}" stroke-width="${shape.strokeWidth}"/>`;
+            } else if (shape.type === 'circle') {
+              const cx = (shape.start.x + shape.end.x) / 2;
+              const cy = (shape.start.y + shape.end.y) / 2;
+              const rx = Math.abs(shape.end.x - shape.start.x) / 2;
+              const ry = Math.abs(shape.end.y - shape.start.y) / 2;
+              svg += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" stroke="${shape.color}" fill="${shape.fillMode === 'fill' ? shape.color : 'none'}" stroke-width="${shape.strokeWidth}"/>`;
+            }
+          });
+          svg += `</svg>`;
+          CindaraVector.UI.svgPreviewContent.innerHTML = svg;
+        }
+      },
+      setTool: (tool) => {
+        CindaraVector._state.tool = tool;
+        CindaraVector.UI.updateToolUI();
+      },
+      toggleSnapGrid: () => {
+        CindaraVector._state.snapGrid = !CindaraVector._state.snapGrid;
+        CindaraVector.UI.snapGridBtn.textContent = `Snap: ${CindaraVector._state.snapGrid ? 'On' : 'Off'}`;
+        CindaraVector.UI.liveRegion.textContent = `Snap to grid: ${CindaraVector._state.snapGrid ? 'enabled' : 'disabled'}`;
+      },
+      undo: () => {
+        if (CindaraVector._state.historyIndex > -1) {
+          CindaraVector._state.historyIndex--;
+          CindaraVector._state.shapes = CindaraVector._state.history[CindaraVector._state.historyIndex] ? [...CindaraVector._state.history[CindaraVector._state.historyIndex]] : [];
+          CindaraVector.UI.redraw();
+          CindaraVector.UI.updateSVGPreview();
+          CindaraVector.UI.liveRegion.textContent = 'Undo performed';
+        }
+      },
+      redo: () => {
+        if (CindaraVector._state.historyIndex < CindaraVector._state.history.length - 1) {
+          CindaraVector._state.historyIndex++;
+          CindaraVector._state.shapes = [...CindaraVector._state.history[CindaraVector._state.historyIndex]];
+          CindaraVector.UI.redraw();
+          CindaraVector.UI.updateSVGPreview();
+          CindaraVector.UI.liveRegion.textContent = 'Redo performed';
+        }
+      },
+      clearCanvas: () => {
+        CindaraVector._state.shapes = [];
+        CindaraVector._state.history = [[]];
+        CindaraVector._state.historyIndex = 0;
+        CindaraVector.UI.redraw();
+        CindaraVector.UI.updateSVGPreview();
+        CindaraVector.UI.liveRegion.textContent = 'Canvas cleared';
+      },
+      toggleSVGPreview: () => {
+        CindaraVector.UI.svgPreview.classList.toggle('open');
+        CindaraVector.UI.liveRegion.textContent = `SVG Preview ${CindaraVector.UI.svgPreview.classList.contains('open') ? 'opened' : 'closed'}`;
+      },
+      downloadSVG: () => {
+        if (!CindaraVector._state.shapes.length) {
+          alert('No shapes to export.');
+          return;
+        }
+        let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${CindaraVector._state.canvasWidth}" height="${CindaraVector._state.canvasHeight}" style="background: #fff;">`;
+        CindaraVector._state.shapes.forEach(shape => {
+          if (shape.type === 'pen') {
+            const d = shape.points.map((pt, i) => `${i === 0 ? 'M' : 'L'}${pt.x},${pt.y}`).join(' ');
+            svg += `<path d="${d}" stroke="${shape.color}" fill="${shape.fillMode === 'fill' ? shape.color : 'none'}" stroke-width="${shape.strokeWidth}"/>`;
+          } else if (shape.type === 'rect') {
+            const x = Math.min(shape.start.x, shape.end.x);
+            const y = Math.min(shape.start.y, shape.end.y);
+            const w = Math.abs(shape.end.x - shape.start.x);
+            const h = Math.abs(shape.end.y - shape.start.y);
+            svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" stroke="${shape.color}" fill="${shape.fillMode === 'fill' ? shape.color : 'none'}" stroke-width="${shape.strokeWidth}"/>`;
+          } else if (shape.type === 'circle') {
+            const cx = (shape.start.x + shape.end.x) / 2;
+            const cy = (shape.start.y + shape.end.y) / 2;
+            const rx = Math.abs(shape.end.x - shape.start.x) / 2;
+            const ry = Math.abs(shape.end.y - shape.start.y) / 2;
+            svg += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" stroke="${shape.color}" fill="${shape.fillMode === 'fill' ? shape.color : 'none'}" stroke-width="${shape.strokeWidth}"/>`;
+          }
+        });
+        svg += `</svg>`;
+        svg = svg.replace(/\s+/g, ' ').trim();
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cindara-vector-${Date.now()}.svg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        CindaraVector.UI.liveRegion.textContent = 'SVG exported';
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', CindaraVector.UI.init);
+  </script>
 </body>
 </html>
