@@ -6,9 +6,10 @@
     <title>Cindara Vectorizer</title>
     <style>
         :root {
-            --primary-color: #f38b00;
-            --glow-color: #ffbf40;
-            --gradient: linear-gradient(90deg, #f38b00, #ffbf40);
+            --primary-color: #e37800;
+            --glow-color: #ffb340;
+            --gradient: linear-gradient(90deg, #e37800, #ffb340);
+            --shadow-glow: 0 0 10px rgba(255, 191, 64, 0.4);
         }
         * {
             box-sizing: border-box;
@@ -44,7 +45,7 @@
             font-size: 24px;
             font-weight: 700;
             margin: 0;
-            text-shadow: 0 0 8px #ffbf40aa;
+            text-shadow: var(--shadow-glow);
         }
         #status {
             padding: 6px 12px;
@@ -87,15 +88,15 @@
         }
         .tool-btn:hover, .export-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px #ffbf40aa;
+            box-shadow: var(--shadow-glow);
         }
         .tool-btn:active, .export-btn:active {
             transform: translateY(1px);
             box-shadow: none;
         }
         .tool-btn.active {
-            background: #ffbf40;
-            box-shadow: 0 0 8px #ffbf40aa;
+            background: #ffb340;
+            box-shadow: var(--shadow-glow);
         }
         .tool-btn svg, .export-btn svg {
             width: 18px;
@@ -123,6 +124,7 @@
             border-radius: 50%;
             cursor: crosshair;
             clip-path: circle(40px at center);
+            aspect-ratio: 1 / 1;
         }
         #lightnessSlider {
             width: 20px;
@@ -300,8 +302,8 @@
             <div class="divider"></div>
             <div id="colorPicker">
                 <div style="display: flex; gap: 8px;">
-                    <canvas id="colorCanvas"></canvas>
-                    <canvas id="lightnessSlider"></canvas>
+                    <canvas id="colorCanvas" width="80" height="80"></canvas>
+                    <canvas id="lightnessSlider" width="20" height="80"></canvas>
                 </div>
                 <div id="colorInputs">
                     <input id="hexInput" placeholder="HEX" aria-label="HEX Color Input">
@@ -376,7 +378,7 @@
         let drawing = false;
         let paths = [];
         let currentPath = [];
-        let currentColor = '#f38b00';
+        let currentColor = '#e37800';
         let currentLightness = 50;
         let swatchHistory = JSON.parse(localStorage.getItem('swatches')) || [];
 
