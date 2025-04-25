@@ -1,4 +1,4 @@
-Index.html<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -383,6 +383,29 @@ Index.html<!DOCTYPE html>
 const importImageInput = document.getElementById('importImage');
 let backgroundImage = null;
 function exportCanvas(format) {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // Draw background image first (if one exists)
+    if (backgroundImage) {
+        tempCtx.drawImage(backgroundImage, 0, 0, tempCanvas.width, tempCanvas.height);
+    }
+
+    // Then draw whatever's already on the canvas (your pen/shape drawings)
+    tempCtx.drawImage(canvas, 0, 0);
+
+    // Create a file and trigger download
+    const filename = filenameInput.value || 'vector-export';
+    const a = document.createElement('a');
+    a.href = tempCanvas.toDataURL(`image/${format}`);
+    a.download = `${filename}.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = canvas.width;
     tempCanvas.height = canvas.height;
