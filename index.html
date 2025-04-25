@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:">
   <title>Doppleit Vector</title>
   <link rel="icon" type="image/svg+xml" href="Assets/doppleit_logo_placeholder.svg">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -75,7 +76,67 @@
       border-radius: 50%;
       margin-right: 6px;
     }
-    /* ...keep the rest of your vector-specific CSS and layout (toolbar, canvas, footer, etc) exactly as-is. It was already perfect. */
+    #toolbar {
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    #canvasContainer {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #2a2a40;
+    }
+    #canvas {
+      background: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+    }
+    #footer {
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    button, input {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      background: var(--gradient);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    button:hover, input:hover {
+      transform: scale(1.05);
+      box-shadow: var(--shadow-glow);
+    }
+    button:focus, input:focus {
+      outline: 2px solid var(--glow-color);
+      outline-offset: 2px;
+    }
+    input[type="color"] {
+      padding: 2px;
+      width: 40px;
+      height: 40px;
+    }
+    @media (max-width: 480px) {
+      #canvas {
+        width: 100%;
+        height: auto;
+      }
+      #toolbar, #footer {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
   </style>
 </head>
 <body>
@@ -84,10 +145,180 @@
       <img src="Assets/doppleit_logo_placeholder.svg" alt="Doppleit - Software that reflects your creativity" class="logo-glitch">
       <div id="status">Online</div>
     </div>
-
-    <!-- Everything below here is your full drawing UI: toolbar, canvasContainer, export buttons, JS, etc. -->
-    <!-- Keep 100% of your previous layout and script logic — just swap in this header above. -->
-
+    <div id="toolbar">
+      <button id="penTool" title="Pen Tool (P)" aria-label="Pen Tool">Pen</button>
+      <button id="shapeTool" title="Shape Tool (R)" aria-label="Shape Tool">Shape</button>
+      <input type="color" id="fillColor" value="#ffffff" title="Fill Color" aria-label="Fill Color">
+      <input type="color" id="strokeColor" value="#000000" title="Stroke Color" aria-label="Stroke Color">
+      <input type="range" id="opacity" min="0" max="1" step="0.1" value="1" title="Opacity" aria-label="Opacity">
+      <input type="range" id="strokeWidth" min="1" max="10" step="1" value="1" title="Stroke Width" aria-label="Stroke Width">
+    </div>
+    <div id="canvasContainer">
+      <canvas id="canvas" width="800" height="600"></canvas>
+    </div>
+    <div id="footer">
+      <input type="text" id="filename" value="doppleit-vector-2025-04-25" title="Filename" aria-label="Filename">
+      <button id="exportSVG" title="Export as SVG (Ctrl+S)" aria-label="Export as SVG">Export SVG</button>
+      <button id="exportPNG" title="Export as PNG" aria-label="Export as PNG">Export PNG</button>
+      <button id="exportJPEG" title="Export as JPEG" aria-label="Export as JPEG">Export JPEG</button>
+      <button id="undo" title="Undo (Ctrl+Z)" aria-label="Undo">Undo</button>
+    </div>
   </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const penTool = document.getElementById('penTool');
+      const shapeTool = document.getElementById('shapeTool');
+      const fillColor = document.getElementById('fillColor');
+      const strokeColor = document.getElementById('strokeColor');
+      const opacity = document.getElementById('opacity');
+      const strokeWidth = document.getElementById('strokeWidth');
+      const exportSVG = document.getElementById('exportSVG');
+      const exportPNG = document.getElementById('exportPNG');
+      const exportJPEG = document.getElementById('exportJPEG');
+      const undo = document.getElementById('undo');
+      const filenameInput = document.getElementById('filename');
+
+      let mode = 'pen';
+      let isDrawing = false;
+      let startX, startY;
+      let paths = [];
+      let currentPath = [];
+
+      penTool.onclick = () => {
+        mode = 'pen';
+        penTool.style.background = 'linear-gradient(90deg, #ffbf40, #e37800)';
+        shapeTool.style.background = 'linear-gradient(90deg, #e37800, #ffbf40)';
+      };
+      shapeTool.onclick = () => {
+        mode = 'shape';
+        shapeTool.style.background = 'linear-gradient(90deg, #ffbf40, #e37800)';
+        penTool.style.background = 'linear-gradient(90deg, #e37800, #ffbf40)';
+      };
+
+      canvas.addEventListener('mousedown', (e) => {
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        startX = e.clientX - rect.left;
+        startY = e.clientY - rect.top;
+        currentPath = [{ x: startX, y: startY }];
+      });
+
+      canvas.addEventListener('mousemove', (e) => {
+        if (!isDrawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (mode === 'pen') {
+          currentPath.push({ x, y });
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(x, y);
+          ctx.strokeStyle = strokeColor.value;
+          ctx.lineWidth = strokeWidth.value;
+          ctx.globalAlpha = opacity.value;
+          ctx.stroke();
+          startX = x;
+          startY = y;
+        }
+      });
+
+      canvas.addEventListener('mouseup', () => {
+        if (isDrawing) {
+          if (mode === 'shape') {
+            ctx.beginPath();
+            ctx.rect(startX, startY, 50, 50);
+            ctx.fillStyle = fillColor.value;
+            ctx.strokeStyle = strokeColor.value;
+            ctx.lineWidth = strokeWidth.value;
+            ctx.globalAlpha = opacity.value;
+            ctx.fill();
+            ctx.stroke();
+            currentPath = [{ type: 'rect', x: startX, y: startY, width: 50, height: 50 }];
+          }
+          paths.push(currentPath);
+          currentPath = [];
+        }
+        isDrawing = false;
+      });
+
+      undo.onclick = () => {
+        paths.pop();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        paths.forEach(path => {
+          if (path[0].type === 'rect') {
+            ctx.beginPath();
+            ctx.rect(path[0].x, path[0].y, path[0].width, path[0].height);
+            ctx.fillStyle = fillColor.value;
+            ctx.strokeStyle = strokeColor.value;
+            ctx.lineWidth = strokeWidth.value;
+            ctx.globalAlpha = opacity.value;
+            ctx.fill();
+            ctx.stroke();
+          } else {
+            ctx.beginPath();
+            ctx.moveTo(path[0].x, path[0].y);
+            for (let i = 1; i < path.length; i++) {
+              ctx.lineTo(path[i].x, path[i].y);
+            }
+            ctx.strokeStyle = strokeColor.value;
+            ctx.lineWidth = strokeWidth.value;
+            ctx.globalAlpha = opacity.value;
+            ctx.stroke();
+          }
+        });
+      };
+
+      exportSVG.onclick = () => {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">
+          ${paths.map(path => {
+            if (path[0].type === 'rect') {
+              return `<rect x="${path[0].x}" y="${path[0].y}" width="${path[0].width}" height="${path[0].height}" fill="${fillColor.value}" stroke="${strokeColor.value}" stroke-width="${strokeWidth.value}" opacity="${opacity.value}"/>`;
+            } else {
+              return `<path d="M${path.map(p => `${p.x},${p.y}`).join(' L')}" fill="none" stroke="${strokeColor.value}" stroke-width="${strokeWidth.value}" opacity="${opacity.value}"/>`;
+            }
+          }).join('')}
+        </svg>`;
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filenameInput.value}.svg`;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      exportPNG.onclick = () => {
+        const url = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filenameInput.value}.png`;
+        a.click();
+      };
+
+      exportJPEG.onclick = () => {
+        const url = canvas.toDataURL('image/jpeg');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filenameInput.value}.jpeg`;
+        a.click();
+      };
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'p' || e.key === 'P') penTool.click();
+        if (e.key === 'r' || e.key === 'R') shapeTool.click();
+        if (e.ctrlKey && e.key === 's') {
+          e.preventDefault();
+          exportSVG.click();
+        }
+        if (e.ctrlKey && e.key === 'z') {
+          e.preventDefault();
+          undo.click();
+        }
+      });
+    });
+  </script>
 </body>
 </html>
