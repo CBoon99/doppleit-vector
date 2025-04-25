@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+Index.html<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -292,6 +292,12 @@
             <div id="status">Online</div>
         </div>
         <div id="toolbar">
+<input type="file" id="importImage" accept="image/png, image/jpeg, image/svg+xml" style="display: none;">
+<button class="tool-btn tooltip" onclick="document.getElementById('importImage').click();" title="Import Image" aria-label="Import Image">
+    <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5zm0-10l7-7 7 7h-4v6h-6v-6H5z"/></svg>
+    Import
+</button>
+
             <button class="tool-btn active tooltip" data-tool="pen" title="Pen Tool" aria-label="Pen Tool">
                 <svg viewBox="0 0 24 24"><path d="M3 17v4h4l14-14-4-4z"/></svg>
                 Pen
@@ -374,6 +380,59 @@
         const exportSvg = document.getElementById('exportSvg');
         const exportPng = document.getElementById('exportPng');
         const exportJpeg = document.getElementById('exportJpeg');
+const importImageInput = document.getElementById('importImage');
+let backgroundImage = null;
+function exportCanvas(format) {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+
+    if (backgroundImage) {
+        tempCtx.drawImage(backgroundImage, 0, 0, tempCanvas.width, tempCanvas.height);
+    }
+
+    tempCtx.lineCap = 'round';
+    tempCtx.lineJoin = 'round';
+    tempCtx.globalAlpha = opacity.value;
+    tempCtx.lineWidth = strokeWidth.value;
+    tempCtx.strokeStyle = currentColor;
+
+    paths.forEach(path => {
+        if (path.length < 2) return;
+        tempCtx.beginPath();
+        tempCtx.moveTo(path[0].x, path[0].y);
+        for (let i = 1; i < path.length; i++) {
+            tempCtx.lineTo(path[i].x, path[i].y);
+        }
+        tempCtx.stroke();
+    });
+
+    const filename = filenameInput.value || 'vector-export';
+    const a = document.createElement('a');
+    a.href = tempCanvas.toDataURL(`image/${format}`);
+    a.download = `${filename}.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+
+importImageInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+            backgroundImage = img;
+            draw(); // Redraw canvas with background
+        }
+        img.src = event.target.result;
+    }
+    reader.readAsDataURL(file);
+});
+
 
         let currentTool = 'pen';
         let drawing = false;
@@ -413,8 +472,9 @@ const canvas = document.getElementById('canvas');
         const strokeStyle = document.getElementById('strokeStyle');
         const filenameInput = document.getElementById('filenameInput');
         const exportSvg = document.getElementById('exportSvg');
-        const exportPng = document.getElementById('exportPng');
-        const exportJpeg = document.getElementById('exportJpeg');
+       exportPng.addEventListener('click', () => exportCanvas('png'));
+       exportJpeg.addEventListener('click', () => exportCanvas('jpeg'));
+
 
         let currentTool = 'pen';
         let drawing = false;
@@ -637,7 +697,28 @@ const canvas = document.getElementById('canvas');
                 const y = e.clientY - rect.top;
                 currentPath = [{ x, y }];
                 paths.push(currentPath);
-                draw();
+                draw();function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (backgroundImage) {
+        ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+    }
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.globalAlpha = opacity.value;
+    ctx.lineWidth = strokeWidth.value;
+    ctx.strokeStyle = currentColor;
+
+    paths.forEach(path => {
+        if (path.length < 2) return;
+        ctx.beginPath();
+        ctx.moveTo(path[0].x, path[0].y);
+        for (let i = 1; i < path.length; i++) {
+            ctx.lineTo(path[i].x, path[i].y);
+        }
+        ctx.stroke();
+    });
+}
+
             }
         }
 
