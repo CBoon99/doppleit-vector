@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
     <title>Doppleit Vector</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-color: #e37800;
@@ -292,12 +293,6 @@
             <div id="status">Online</div>
         </div>
         <div id="toolbar">
-<input type="file" id="importImage" accept="image/png, image/jpeg, image/svg+xml" style="display: none;">
-<button class="tool-btn tooltip" onclick="document.getElementById('importImage').click();" title="Import Image" aria-label="Import Image">
-    <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5zm0-10l7-7 7 7h-4v6h-6v-6H5z"/></svg>
-    Import
-</button>
-
             <button class="tool-btn active tooltip" data-tool="pen" title="Pen Tool" aria-label="Pen Tool">
                 <svg viewBox="0 0 24 24"><path d="M3 17v4h4l14-14-4-4z"/></svg>
                 Pen
@@ -305,6 +300,11 @@
             <button class="tool-btn tooltip" data-tool="shape" title="Shape Tool" aria-label="Shape Tool">
                 <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"/></svg>
                 Shape
+            </button>
+            <input type="file" id="importImage" accept="image/png, image/jpeg, image/svg+xml" style="display: none;">
+            <button class="tool-btn tooltip" id="importBtn" title="Import Image" aria-label="Import Image">
+                <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5zm0-10l7-7 7 7h-4v6h-6v-6H5z"/></svg>
+                Import
             </button>
             <div class="divider"></div>
             <div id="colorPicker">
@@ -358,7 +358,7 @@
         <div id="footer">
             <a href="#" aria-label="About Doppleit">About</a> |
             <a href="#" aria-label="Support">Support</a> |
-            Doppleit Suite v1.0 &copy; 2025
+            Doppleit Suite v1.0 © 2025
         </div>
     </div>
     <script>
@@ -380,138 +380,44 @@
         const exportSvg = document.getElementById('exportSvg');
         const exportPng = document.getElementById('exportPng');
         const exportJpeg = document.getElementById('exportJpeg');
-const importImageInput = document.getElementById('importImage');
-let backgroundImage = null;
-function exportCanvas(format) {
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-    const tempCtx = tempCanvas.getContext('2d');
-
-    // Draw background image first (if one exists)
-    if (backgroundImage) {
-        tempCtx.drawImage(backgroundImage, 0, 0, tempCanvas.width, tempCanvas.height);
-    }
-
-    // Then draw whatever's already on the canvas (your pen/shape drawings)
-    tempCtx.drawImage(canvas, 0, 0);
-
-    // Create a file and trigger download
-    const filename = filenameInput.value || 'vector-export';
-    const a = document.createElement('a');
-    a.href = tempCanvas.toDataURL(`image/${format}`);
-    a.download = `${filename}.${format}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
-
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-    const tempCtx = tempCanvas.getContext('2d');
-
-    if (backgroundImage) {
-        tempCtx.drawImage(backgroundImage, 0, 0, tempCanvas.width, tempCanvas.height);
-    }
-
-    tempCtx.lineCap = 'round';
-    tempCtx.lineJoin = 'round';
-    tempCtx.globalAlpha = opacity.value;
-    tempCtx.lineWidth = strokeWidth.value;
-    tempCtx.strokeStyle = currentColor;
-
-    paths.forEach(path => {
-        if (path.length < 2) return;
-        tempCtx.beginPath();
-        tempCtx.moveTo(path[0].x, path[0].y);
-        for (let i = 1; i < path.length; i++) {
-            tempCtx.lineTo(path[i].x, path[i].y);
-        }
-        tempCtx.stroke();
-    });
-
-    const filename = filenameInput.value || 'vector-export';
-    const a = document.createElement('a');
-    a.href = tempCanvas.toDataURL(`image/${format}`);
-    a.download = `${filename}.${format}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
-
-
-importImageInput.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        const img = new Image();
-        img.onload = function() {
-            backgroundImage = img;
-            draw(); // Redraw canvas with background
-        }
-        img.src = event.target.result;
-    }
-    reader.readAsDataURL(file);
-});
-
+        const importImageInput = document.getElementById('importImage');
+        const toolButtons = document.querySelectorAll('.tool-btn');
 
         let currentTool = 'pen';
         let drawing = false;
         let paths = [];
-        let currentPath = [];
+        let currentPath = null;
         let currentColor = '#e37800';
         let currentLightness = 50;
         let swatchHistory = JSON.parse(localStorage.getItem('swatches')) || [];
+        let backgroundImage = null;
 
-        function updateCursor() {
-            canvas.style.cursor = currentTool === 'pen' ? 'crosshair' : 'default';
+        // Initialize Canvas and Color Picker
+        function initialize() {
+            // Set default filename with date
+            const today = new Date().toISOString().slice(0, 10);
+            filenameInput.value = `doppleit-vector-${today}`;
+
+            // Initialize color picker
+            drawColorWheel();
+            drawLightnessSlider();
+            updateSwatches();
+
+            // Draw initial canvas state
+            redrawCanvas();
         }
-        updateCursor();
 
-        function drawColorWheel() {
-            const width = colorCanvas.width;
-            const height = colorCanvas.height;
-            const centerX = width / 2;
-            const centerY = height / 2;
-            const radius = Math.min(width, height) / 2;
+        // Tool Switching
+        toolButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                toolButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentTool = btn.dataset.tool;
+                canvas.style.cursor = currentTool === 'pen' ? 'crosshair' : 'default';
+            });
+        });
 
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x
-const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const colorCanvas = document.getElementById('colorCanvas');
-        const colorCtx = colorCanvas.getContext('2d');
-        const lightnessSlider = document.getElementById('lightnessSlider');
-        const lightnessCtx = lightnessSlider.getContext('2d');
-        const hexInput = document.getElementById('hexInput');
-        const hslInput = document.getElementById('hslInput');
-        const rgbInput = document.getElementById('rgbInput');
-        const swatches = document.getElementById('swatches');
-        const strokeWidth = document.getElementById('strokeWidth');
-        const opacity = document.getElementById('opacity');
-        const fill = document.getElementById('fill');
-        const strokeStyle = document.getElementById('strokeStyle');
-        const filenameInput = document.getElementById('filenameInput');
-        const exportSvg = document.getElementById('exportSvg');
-       exportPng.addEventListener('click', () => exportCanvas('png'));
-       exportJpeg.addEventListener('click', () => exportCanvas('jpeg'));
-
-
-        let currentTool = 'pen';
-        let drawing = false;
-        let paths = [];
-        let currentPath = [];
-        let currentColor = '#e37800';
-        let currentLightness = 50;
-        let swatchHistory = JSON.parse(localStorage.getItem('swatches')) || [];
-
-        function updateCursor() {
-            canvas.style.cursor = currentTool === 'pen' ? 'crosshair' : 'default';
-        }
-        updateCursor();
-
+        // Color Picker Logic
         function drawColorWheel() {
             const width = colorCanvas.width;
             const height = colorCanvas.height;
@@ -553,7 +459,31 @@ const canvas = document.getElementById('canvas');
             hexInput.value = hslToHex(hue, saturation, lightness);
             hslInput.value = `${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(lightness)}%`;
             rgbInput.value = hslToRgb(hue, saturation, lightness).join(', ');
+
+            // Update swatches
+            swatchHistory = swatchHistory.filter(color => color !== currentColor);
+            swatchHistory.unshift(currentColor);
+            if (swatchHistory.length > 5) swatchHistory.pop();
+            localStorage.setItem('swatches', JSON.stringify(swatchHistory));
+            updateSwatches();
+
+            drawColorWheel();
             drawLightnessSlider();
+        }
+
+        function updateSwatches() {
+            swatches.innerHTML = '';
+            swatchHistory.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'swatch';
+                swatch.style.backgroundColor = color;
+                swatch.addEventListener('click', () => {
+                    const [h, s, l] = rgbToHsl(...hexToRgb(hslToHex(...hslInput.value.split(', ').map(v => parseFloat(v)))));
+                    currentLightness = l;
+                    updateColor(h, s, l);
+                });
+                swatches.appendChild(swatch);
+            });
         }
 
         function hexToRgb(hex) {
@@ -617,7 +547,7 @@ const canvas = document.getElementById('canvas');
         }
 
         function rgbToHex(r, g, b) {
-            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).padStart(6, '0');
         }
 
         function hslToHex(h, s, l) {
@@ -625,7 +555,37 @@ const canvas = document.getElementById('canvas');
             return rgbToHex(r, g, b);
         }
 
+        // Color Picker Event Listeners (Consolidated)
+        let isDraggingColor = false;
+        let isDraggingLightness = false;
+
         colorCanvas.addEventListener('mousedown', (e) => {
+            isDraggingColor = true;
+            handleColorPicker(e);
+        });
+
+        colorCanvas.addEventListener('mousemove', (e) => {
+            if (isDraggingColor) handleColorPicker(e);
+        });
+
+        colorCanvas.addEventListener('mouseup', () => {
+            isDraggingColor = false;
+        });
+
+        lightnessSlider.addEventListener('mousedown', (e) => {
+            isDraggingLightness = true;
+            handleLightnessSlider(e);
+        });
+
+        lightnessSlider.addEventListener('mousemove', (e) => {
+            if (isDraggingLightness) handleLightnessSlider(e);
+        });
+
+        lightnessSlider.addEventListener('mouseup', () => {
+            isDraggingLightness = false;
+        });
+
+        function handleColorPicker(e) {
             const rect = colorCanvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -642,16 +602,15 @@ const canvas = document.getElementById('canvas');
                 const hue = angle * (180 / Math.PI) + 180;
                 updateColor(hue, saturation, currentLightness);
             }
-        });
+        }
 
-        lightnessSlider.addEventListener('mousedown', (e) => {
+        function handleLightnessSlider(e) {
             const rect = lightnessSlider.getBoundingClientRect();
             let y = e.clientY - rect.top;
             currentLightness = Math.max(0, Math.min(100, (1 - y / rect.height) * 100));
-            drawLightnessSlider();
-            const [h, s, l] = hslInput.value.split(', ').map(v => parseFloat(v));
+            const [h, s] = hslInput.value.split(', ').map(v => parseFloat(v));
             updateColor(h, s, currentLightness);
-        });
+        }
 
         hexInput.addEventListener('change', () => {
             const hex = hexInput.value;
@@ -674,165 +633,183 @@ const canvas = document.getElementById('canvas');
 
         rgbInput.addEventListener('change', () => {
             const rgbValues = rgbInput.value.split(', ').map(v => parseInt(v));
-            if (rgbValues.length === 3 && rgbValues.every(v => !isNaN(v) && v >= 0 && v <= 255)) {
-                const [r, g, b] = rgbValues;
-                const [h, s, l] = rgbToHsl(r, g, b);
+            if (rgbValues.length === 3 && rgbValues.every(v => !isNaN(v))) {
+                const [h, s, l] = rgbToHsl(...rgbValues);
                 currentLightness = l;
                 updateColor(h, s, l);
             }
         });
 
-        function addSwatch(color) {
-            const swatch = document.createElement('div');
-            swatch.classList.add('swatch');
-            swatch.style.backgroundColor = color;
-            swatch.addEventListener('click', () => {
-                currentColor = color;
-                const [h, s, l] = rgbToHsl(...hexToRgb(color));
-                currentLightness = l;
-                updateColor(h, s, l);
+        // Drawing Logic
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw background image if exists
+            if (backgroundImage) {
+                ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+            }
+
+            // Redraw all paths
+            paths.forEach(path => {
+                ctx.beginPath();
+                if (path.type === 'pen') {
+                    ctx.moveTo(path.points[0].x, path.points[0].y);
+                    path.points.forEach(point => {
+                        ctx.lineTo(point.x, point.y);
+                    });
+                } else if (path.type === 'shape') {
+                    ctx.rect(path.startX, path.startY, path.endX - path.startX, path.endY - path.startY);
+                }
+
+                if (path.fill) {
+                    ctx.fillStyle = path.color;
+                    ctx.globalAlpha = path.opacity;
+                    ctx.fill();
+                }
+                ctx.strokeStyle = path.color;
+                ctx.lineWidth = path.strokeWidth;
+                ctx.globalAlpha = path.opacity;
+                if (path.strokeStyle === 'dashed') {
+                    ctx.setLineDash([10, 10]);
+                } else if (path.strokeStyle === 'dotted') {
+                    ctx.setLineDash([2, 5]);
+                } else {
+                    ctx.setLineDash([]);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.globalAlpha = 1;
             });
-            swatches.appendChild(swatch);
         }
 
-        function loadSwatches() {
-            swatchHistory.forEach(color => addSwatch(color));
-        }
-
-        function saveSwatch(color) {
-            if (!swatchHistory.includes(color)) {
-                swatchHistory.push(color);
-                localStorage.setItem('swatches', JSON.stringify(swatchHistory));
-                addSwatch(color);
-            }
-        }
-
-        const colorCanvasContainer = document.querySelector('#colorPicker > div:first-child');
-        colorCanvasContainer.addEventListener('dblclick', () => {
-            saveSwatch(hexInput.value);
-        });
-
-        function handleMouseDown(e) {
-            if (currentTool === 'pen') {
-                drawing = true;
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                currentPath = [{ x, y }];
-                paths.push(currentPath);
-                draw();function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (backgroundImage) {
-        ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
-    }
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.globalAlpha = opacity.value;
-    ctx.lineWidth = strokeWidth.value;
-    ctx.strokeStyle = currentColor;
-
-    paths.forEach(path => {
-        if (path.length < 2) return;
-        ctx.beginPath();
-        ctx.moveTo(path[0].x, path[0].y);
-        for (let i = 1; i < path.length; i++) {
-            ctx.lineTo(path[i].x, path[i].y);
-        }
-        ctx.stroke();
-    });
-}
-
-            }
-        }
-
-        function handleMouseMove(e) {
-            if (!drawing || currentTool !== 'pen') return;
+        canvas.addEventListener('mousedown', (e) => {
+            drawing = true;
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            currentPath.push({ x, y });
-            draw();
-        }
 
-        function handleMouseUp() {
-            drawing = false;
-        }
+            currentPath = {
+                type: currentTool,
+                points: currentTool === 'pen' ? [{ x, y }] : null,
+                startX: x,
+                startY: y,
+                endX: x,
+                endY: y,
+                color: currentColor,
+                strokeWidth: parseInt(strokeWidth.value),
+                opacity: parseFloat(opacity.value),
+                fill: fill.checked,
+                strokeStyle: strokeStyle.value
+            };
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.globalAlpha = opacity.value;
-            ctx.lineWidth = strokeWidth.value;
-            ctx.strokeStyle = currentColor;
-
-            paths.forEach(path => {
-                if (path.length < 2) return;
+            if (currentTool === 'pen') {
                 ctx.beginPath();
-                ctx.moveTo(path[0].x, path[0].y);
-                for (let i = 1; i < path.length; i++) {
-                    ctx.lineTo(path[i].x, path[i].y);
+                ctx.moveTo(x, y);
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!drawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (currentTool === 'pen') {
+                currentPath.points.push({ x, y });
+                ctx.lineTo(x, y);
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = parseInt(strokeWidth.value);
+                ctx.globalAlpha = parseFloat(opacity.value);
+                if (strokeStyle.value === 'dashed') {
+                    ctx.setLineDash([10, 10]);
+                } else if (strokeStyle.value === 'dotted') {
+                    ctx.setLineDash([2, 5]);
+                } else {
+                    ctx.setLineDash([]);
                 }
                 ctx.stroke();
-            });
-        }
-
-        canvas.addEventListener('mousedown', handleMouseDown);
-        canvas.addEventListener('mousemove', handleMouseMove);
-        canvas.addEventListener('mouseup', handleMouseUp);
-        canvas.addEventListener('mouseout', handleMouseUp);
-
-        const toolButtons = document.querySelectorAll('.tool-btn');
-        toolButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                toolButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                currentTool = button.dataset.tool;
-                updateCursor();
-            });
+                ctx.setLineDash([]);
+                ctx.globalAlpha = 1;
+            } else if (currentTool === 'shape') {
+                currentPath.endX = x;
+                currentPath.endY = y;
+                redrawCanvas();
+                ctx.beginPath();
+                ctx.rect(currentPath.startX, currentPath.startY, x - currentPath.startX, y - currentPath.startY);
+                if (fill.checked) {
+                    ctx.fillStyle = currentColor;
+                    ctx.globalAlpha = parseFloat(opacity.value);
+                    ctx.fill();
+                }
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = parseInt(strokeWidth.value);
+                ctx.globalAlpha = parseFloat(opacity.value);
+                if (strokeStyle.value === 'dashed') {
+                    ctx.setLineDash([10, 10]);
+                } else if (strokeStyle.value === 'dotted') {
+                    ctx.setLineDash([2, 5]);
+                } else {
+                    ctx.setLineDash([]);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.globalAlpha = 1;
+            }
         });
 
-        exportSvg.addEventListener('click', () => {
-            const svgPaths = paths.map(path => {
-                const d = path.map((p, index) => index === 0 ? `M${p.x} ${p.y}` : `L${p.x} ${p.y}`).join(' ');
-                return `<path d="${d}" stroke="${currentColor}" stroke-width="${strokeWidth.value}" stroke-linecap="round" stroke-linejoin="round" fill="${fill.checked ? currentColor : 'none'}" stroke-dasharray="${strokeStyle.value === 'dashed' ? '5,5' : strokeStyle.value === 'dotted' ? '2,2' : ''}" opacity="${opacity.value}" />`;
-            }).join('');
-
-            const svg = `<svg width="${canvas.width}" height="${canvas.height}">${svgPaths}</svg>`;
-            const filename = filenameInput.value || 'vector-export';
-            const blob = new Blob([svg], { type: 'image/svg+xml' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${filename}.svg`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+        canvas.addEventListener('mouseup', () => {
+            if (drawing && currentPath) {
+                paths.push(currentPath);
+                currentPath = null;
+                redrawCanvas();
+            }
+            drawing = false;
         });
 
-        exportPng.addEventListener('click', () => {
-            const filename = filenameInput.value || 'vector-export';
-            const a = document.createElement('a');
-            a.href = canvas.toDataURL('image/png');
-            a.download = `${filename}.png`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+        canvas.addEventListener('mouseleave', () => {
+            if (drawing) {
+                paths.push(currentPath);
+                currentPath = null;
+                redrawCanvas();
+                drawing = false;
+            }
         });
 
-        exportJpeg.addEventListener('click', () => {
-            const filename = filenameInput.value || 'vector-export';
-            const a = document.createElement('a');
-            a.href = canvas.toDataURL('image/jpeg');
-            a.download = `${filename}.jpeg`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+        // Import Logic
+        importImageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    backgroundImage = new Image();
+                    backgroundImage.src = event.target.result;
+                    backgroundImage.onload = () => {
+                        redrawCanvas();
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
         });
 
-        drawColorWheel();
-        drawLightnessSlider();
-        loadSwatches();
-        draw();
-    </script>
+        // Export Logic
+        function exportToSvg() {
+            let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">`;
+            
+            // Add background image if exists
+            if (backgroundImage) {
+                svgContent += `<image x="0" y="0" width="${canvas.width}" height="${canvas.height}" href="${backgroundImage.src}" />`;
+            }
+
+            // Add paths
+            paths.forEach(path => {
+                if (path.type === 'pen') {
+                    const d = path.points.map((p, i) => i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`).join(' ');
+                    svgContent += `<path d="${d}" fill="${path.fill ? path.color : 'none'}" stroke="${path.color}" stroke-width="${path.strokeWidth}" opacity="${path.opacity}" stroke-dasharray="${path.strokeStyle === 'dashed' ? '10,10' : path.strokeStyle === 'dotted' ? '2,5' : ''}"/>`;
+                } else if (path.type === 'shape') {
+                    svgContent += `<rect x="${path.startX}" y="${path.startY}" width="${path.endX - path.start ]}
+        </div>
+    </div>
+</body>
+</html>
