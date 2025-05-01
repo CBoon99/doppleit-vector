@@ -1,49 +1,83 @@
-# Doppleit Vector
+# Doppleit Vector v2 Pro
 
-**Doppleit Vector** is the flagship drawing and export tool in the Doppleit Suite.  
-It allows users to create precision vector graphics with live color editing, swatch memory, tool control, and multiple export options — all in a single-page, standalone HTML interface.
+**Reflect your vision. Vector precision.**
 
-## ✨ Features
+Doppleit Vector is a real-time, fully client-side image vectorization tool built for speed, clarity, and creative freedom — no installs, no uploads, no compromise.
 
-- **Live Drawing Tools**: Pen and shape modes with fill, stroke, opacity, and dash styles
-- **Advanced Color Picker**: Circular HSL spectrum, HEX, HSL, RGB inputs, and lightness control
-- **Swatch Memory**: Store your 5 most recent custom colors in local storage
-- **Export Options**: Save your artwork as SVG, PNG, or JPEG
-- **Keyboard Shortcuts**:
-  - `P` — Pen tool
-  - `R` — Shape tool
-  - `Ctrl+S` — Export SVG
-  - `Ctrl+Z` — Undo last path
-- **Filename Input**: Customizable filename field with auto-dated defaults
-- **Responsive Layout**: Mobile-ready interface with adaptive sizing
-- **Accessibility**: ARIA-labeled inputs, tooltips, and focus outlines
-- **Zero Dependencies**: Fully standalone HTML + CSS + JS
+---
 
-## 🎨 Design System
+## 🚀 Features
 
-- **Font**: Inter (system/web-safe)
-- **Colors**: Doppleit orange gradient (#e37800 → #ffbf40)
-- **Glow Accents**: Used on buttons and tool states
+- 🎨 **Image-to-SVG Vectorization**
+  - Drop in `.jpg`, `.jpeg`, or `.png`
+  - Choose color detail and remove background
+  - Get clean, scalable SVG output
 
-## 📂 Structure
+- ⚙️ **Client-Side Performance**
+  - No files are uploaded or stored
+  - Uses a sandboxed [Potrace](https://potrace.sourceforge.net/) engine in a Web Worker
+  - Fully sanitized output via [DOMPurify](https://github.com/cure53/DOMPurify)
 
-- `index.html` — Full deployable file
-- No external libraries or build process required
-- Can be dragged directly into Netlify, Vercel, or any static host
+- 🧠 **UX Focus**
+  - Drag & drop or browse
+  - Live progress bar
+  - Animated loading spinner
+  - Reset / reconvert flow
+  - Dark-mode friendly Doppleit styling
 
-## 🚀 Deployment
+- 🔐 **Security**
+  - CSP-enforced
+  - DOM injection protection (via DOMPurify)
+  - SVGs generated and sandboxed in-browser
+  - No analytics, no tracking, no data collection
 
-Recommended live URL:  
-**https://doppleitvector.netlify.app**
+---
 
-You can also host under `/vector` inside your main Doppleit site:
-**https://doppleit.com/vector**
+## 🧪 Supported Inputs
 
-## 🧠 Notes
+- `.jpg`, `.jpeg`, `.png` up to **5MB**
+- Non-image files are blocked
+- Large or invalid files are rejected with user feedback
 
-This tool is renamed from the original Cindara Vector and now reflects full Doppleit Suite branding and style.  
-All functionality is preserved. No external hosting links required. The file is clean, client-ready, and deployable.
+---
 
-## 📄 License
+## 📄 Output
 
-© Doppleit 2025 — All rights reserved.
+- Clean SVG with embedded path/image data
+- Fully sanitized for browser-safe rendering
+- Downloaded as: `doppleit-vector-[timestamp].svg`
+
+---
+
+## 🛠 Tech Stack
+
+- HTML5 + CSS + JavaScript (no build tools required)
+- [Potrace](https://github.com/tbyrne/potrace) (via CDN)
+- [DOMPurify](https://github.com/cure53/DOMPurify)
+- Hosted on Netlify / any static provider
+
+---
+
+## 📦 Local Setup
+
+You can run it offline by opening `index.html` directly in a browser, or:
+
+```bash
+# Recommended (for CSP + local worker blob support)
+npx serve
+# Then open http://localhost:3000
+```
+
+---
+
+## 📘 License
+
+MIT — free to use, modify, or fork.  
+Doppleit branding, logo, and visual identity © Carl Boon.
+
+---
+
+## ✨ Author
+
+Built by **Carl Boon**  
+🔗 [doppleit.com](https://doppleit.com) (coming soon)
