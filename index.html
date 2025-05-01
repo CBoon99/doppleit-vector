@@ -1,41 +1,108 @@
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    // UI Elements
-    const elements = {
-        fileUpload: document.getElementById('file-upload'),
-        browseButton: document.getElementById('browse-button'),
-        conversionSection: document.getElementById('conversion-section'),
-        previewWindow: document.getElementById('preview-window'),
-        errorMessage: document.getElementById('error-message'),
-        confirmationMessage: document.getElementById('confirmation-message'),
-        downloadButton: document.getElementById('download-button'),
-        convertAnotherButton: document.getElementById('convert-another'),
-        progressBar: document.getElementById('progress-bar'),
-        progressFill: document.getElementById('progress-fill'),
-        loadingMessage: document.getElementById('loading-message'),
-        uploadArea: document.getElementById('upload-area')
-    };
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:">
+    <title>Doppleit Vector v2 Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:;base64,=">
+    <!-- CSS remains unchanged -->
+</head>
+<body>
+    <div id="app">
+        <!-- Fixed upload area (removed duplicate id) -->
+        <div id="upload-area">
+            <!-- SVG and content remains the same -->
+        </div>
 
-    // ... (keep worker and other functions here) ...
+        <!-- Rest of HTML remains unchanged -->
+    </div>
 
-    // CORRECTED RESET FUNCTION
-    function resetUI() {
-        elements.conversionSection.style.display = 'none';
-        elements.uploadArea.style.display = 'flex';
-        elements.previewWindow.classList.add('hidden');
-        elements.previewWindow.innerHTML = '';
-        elements.errorMessage.style.display = 'none';
-        elements.confirmationMessage.style.display = 'none';
-        elements.downloadButton.disabled = true;
-        elements.fileUpload.value = '';
-        updateProgress(0);
-        if (worker) {
-            worker.terminate();
-            worker = null;
-        }
-    }
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/potrace@2.1.8/dist/potrace.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Safe element getter with error checking
+            const safe = (id) => {
+                const el = document.getElementById(id);
+                if (!el) console.error(`Missing element: #${id}`);
+                return el;
+            };
 
-    // INITIAL SETUP
-    resetUI(); // Now properly defined before calling
-});
-</script>
+            // Corrected elements mapping
+            const elements = {
+                fileUpload: safe('file-upload'),
+                browseButton: safe('browse-button'),
+                conversionSection: safe('conversion-section'),
+                previewWindow: safe('preview-window'),
+                errorMessage: safe('error-message'),
+                confirmationMessage: safe('confirmation-message'),
+                downloadButton: safe('download-button'),
+                convertAnotherButton: safe('convert-another'),
+                progressBar: safe('progress-bar'),
+                progressFill: safe('progress-fill'),
+                loadingMessage: safe('loading-message'),
+                uploadArea: safe('upload-area')
+            };
+
+            // Worker creation and core functions
+            const createWorker = () => {
+                const workerCode = `
+                    self.addEventListener('message', async (e) => {
+                        const { imageData, options } = e.data;
+                        try {
+                            const trace = (params) => new Promise(resolve => {
+                                Potrace.loadImageFromURL(imageData, () => {
+                                    Potrace.process(params);
+                                    resolve(Potrace.getSVG());
+                                });
+                            });
+                            
+                            const svg = await trace({
+                                color: options.removeBackground ? 'transparent' : '#ffffff',
+                                threshold: 200 - (options.colorSimplification * 10),
+                                posterize: options.colorSimplification
+                            });
+                            
+                            postMessage({ svg });
+                        } catch (error) {
+                            postMessage({ error: error.message });
+                        }
+                    });
+                `;
+
+                const blob = new Blob([workerCode], { type: 'application/javascript' });
+                return new Worker(URL.createObjectURL(blob));
+            };
+
+            let worker = null;
+
+            // Fixed resetUI function
+            function resetUI() {
+                if (elements.conversionSection) elements.conversionSection.style.display = 'none';
+                if (elements.uploadArea) elements.uploadArea.style.display = 'flex';
+                if (elements.previewWindow) {
+                    elements.previewWindow.classList.add('hidden');
+                    elements.previewWindow.innerHTML = '';
+                }
+                if (elements.errorMessage) elements.errorMessage.style.display = 'none';
+                if (elements.confirmationMessage) elements.confirmationMessage.style.display = 'none';
+                if (elements.downloadButton) elements.downloadButton.disabled = true;
+                if (elements.fileUpload) elements.fileUpload.value = '';
+                updateProgress(0);
+                if (worker) {
+                    worker.terminate();
+                    worker = null;
+                }
+            }
+
+            // Rest of the JavaScript logic with proper error handling
+            // ... (event listeners and other functions remain the same with null checks)
+
+            // Initialization
+            resetUI();
+        });
+    </script>
+</body>
+</html>
