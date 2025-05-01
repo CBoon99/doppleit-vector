@@ -4,13 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'self'; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'nonce-RANDOM_NONCE'; style-src 'self' 'nonce-RANDOM_NONCE' https://fonts.googleapis.com; img-src 'self' data: blob:; connect-src 'self'">
+          content="default-src 'self'; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'nonce-doppleit'; style-src 'self' 'nonce-doppleit' https://fonts.googleapis.com; img-src 'self' data: blob:; connect-src 'self'">
     <meta name="description" content="Create and edit vector graphics with Doppleit Vector v2 Pro. Fast, in-browser processing.">
     <meta name="keywords" content="vector editor, SVG converter, Doppleit Vector">
     <title>Doppleit Vector v2 Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="icon" href="data:image/x-icon;," />
-    <style nonce="RANDOM_NONCE">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90' font-family='Inter' fill='%23e37800'%3ED%3C/text%3E%3C/svg%3E" />
+    <style nonce="doppleit">
         :root {
             --primary-color: #e37800;
             --glow-color: #ffbf40;
@@ -76,15 +76,15 @@
             color: #ccc;
             margin-bottom: 20px;
             position: relative;
-            animation: glitch 0.5s infinite;
+            animation: glitch 2s infinite;
         }
 
         @keyframes glitch {
             0% { transform: translate(0); text-shadow: 0 0 5px var(--glow-color); }
-            20% { transform: translate(-2px, 2px); text-shadow: -2px 2px #f00, 2px -2px #0ff; }
-            40% { transform: translate(2px, -2px); text-shadow: 2px -2px #f00, -2px 2px #0ff; }
-            60% { transform: translate(-2px, -2px); }
-            80% { transform: translate(2px, 2px); }
+            20% { transform: translate(-1px, 1px); text-shadow: -1px 1px #f00, 1px -1px #0ff; }
+            40% { transform: translate(1px, -1px); text-shadow: 1px -1px #f00, -1px 1px #0ff; }
+            60% { transform: translate(-1px, -1px); }
+            80% { transform: translate(1px, 1px); }
             100% { transform: translate(0); text-shadow: 0 0 5px var(--glow-color); }
         }
 
@@ -207,6 +207,33 @@
 
         #lightness-slider, #opacity-slider, #stroke-width-slider {
             width: 100px;
+            appearance: none;
+            background: var(--panel-bg);
+            height: 4px;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        #lightness-slider::-webkit-slider-thumb,
+        #opacity-slider::-webkit-slider-thumb,
+        #stroke-width-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--gradient);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: var(--shadow-glow);
+        }
+
+        #lightness-slider::-moz-range-thumb,
+        #opacity-slider::-moz-range-thumb,
+        #stroke-width-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: var(--glow-color);
+            border-radius: 50%;
+            cursor: pointer;
         }
 
         #swatches {
@@ -325,6 +352,18 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
+        #text-input {
+            position: absolute;
+            background: var(--panel-bg);
+            color: var(--text-color);
+            border: 1px solid var(--glow-color);
+            border-radius: 4px;
+            padding: 5px;
+            font-family: 'Inter', sans-serif;
+            display: none;
+            z-index: 1000;
+        }
+
         @media (max-width: 600px) {
             #header h1 {
                 font-size: 1.8rem;
@@ -363,7 +402,7 @@
     </style>
 </head>
 <body>
-    <div id="app">
+<div id="app">
         <div id="header">
             <h1>Doppleit Vector</h1>
             <p id="tagline">Reflect Your Vision. Vector Precision.</p>
@@ -373,7 +412,6 @@
             <button class="button" id="theme-toggle" aria-label="Toggle dark/light theme">Toggle Theme</button>
             <button class="button" id="high-contrast-toggle" aria-label="Toggle high contrast mode">High Contrast</button>
             <button class="button" id="reset-session" aria-label="Reset session">Reset Session</button>
-            <button class="button" id="debug-toggle" aria-label="Toggle debug panel">Debug Panel</button>
             <button class="button" id="help-toggle" aria-label="Show help modal">Help</button>
             <span id="offline-indicator" class="hidden" aria-label="Offline status">Offline</span>
         </div>
@@ -390,7 +428,7 @@
         <div id="canvas-section">
             <div id="color-tools">
                 <canvas id="color-wheel" width="100" height="100" role="img" aria-label="Color wheel for hue and saturation"></canvas>
-                <input type="range" id="lightness-slider" min="0" max="100" value="50" aria-label="Lightness slider" />
+                <input type="range" id="lightness-slider" min="0" max="100" value="50" aria-label="Lightness slider" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" />
                 <input type="color" id="native-picker" hidden aria-label="Native color picker" />
                 <button class="button" id="system-picker" aria-label="Open system color picker">System Picker</button>
                 <button class="button" id="eyedropper-tool" aria-label="Eyedropper tool">Eyedropper</button>
@@ -398,18 +436,8 @@
                 <input type="text" id="rgb-input" value="255,191,64" aria-label="RGB color input" />
                 <input type="text" id="hsl-input" value="41,100%,75%" aria-label="HSL color input" />
                 <label><input type="checkbox" id="fill-toggle" checked aria-label="Toggle fill" /> Fill</label>
-                <input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="1" aria-label="Opacity slider" />
-                <input type="
-
-
-
-
-nearly little sister, keep going pls x
-
-
-HTML
-
-                <range" id="stroke-width-slider" min="0" max="10" value="1" aria-label="Stroke width slider" />
+                <input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="1" aria-label="Opacity slider" aria-valuenow="1" aria-valuemin="0" aria-valuemax="1" />
+                <input type="range" id="stroke-width-slider" min="0.1" max="10" value="1" aria-label="Stroke width slider" aria-valuenow="1" aria-valuemin="0.1" aria-valuemax="10" />
                 <select id="stroke-style" aria-label="Stroke style">
                     <option value="solid">Solid</option>
                     <option value="dashed">Dashed</option>
@@ -445,14 +473,15 @@ HTML
                     <input type="text" id="stroke-color-input" maxlength="7" aria-label="Stroke color input" />
                 </label>
                 <label>Opacity:
-                    <input type="range" id="object-opacity-slider" min="0" max="1" step="0.01" value="1" aria-label="Object opacity slider" />
+                    <input type="range" id="object-opacity-slider" min="0" max="1" step="0.01" value="1" aria-label="Object opacity slider" aria-valuenow="1" aria-valuemin="0" aria-valuemax="1" />
                 </label>
                 <label>Stroke Width:
-                    <input type="range" id="object-stroke-width-slider" min="0" max="10" value="1" aria-label="Object stroke width slider" />
+                    <input type="range" id="object-stroke-width-slider" min="0.1" max="10" value="1" aria-label="Object stroke width slider" aria-valuenow="1" aria-valuemin="0.1" aria-valuemax="10" />
                 </label>
             </div>
             <canvas id="drawing-canvas" width="600" height="400" role="application" aria-label="Drawing canvas for vector editing"></canvas>
             <svg id="grid" class="grid hidden" width="600" height="400"></svg>
+            <input type="text" id="text-input" class="hidden" aria-label="Enter text for canvas" />
         </div>
 
         <div id="export-section" class="hidden">
@@ -493,7 +522,7 @@ HTML
         <p>© 2025 Doppleit - Images are processed in-browser and are not sent to any server.</p>
         <p><a href="/privacy">Privacy Policy</a> | <a href="/faq">FAQ</a> | <a href="/feedback">Feedback</a></p>
     </div>
-    <script nonce="RANDOM_NONCE">
+    <script nonce="doppleit">
         // Constants
         const MAX_FILE_SIZE = 5_242_880; // 5MB
         const VALID_TYPES = ['image/jpeg', 'image/png', 'image/svg+xml'];
@@ -516,11 +545,12 @@ HTML
         let swatches = JSON.parse(localStorage.getItem('swatches') || '[]');
         let isPreviewMode = false;
         let settings = JSON.parse(localStorage.getItem('settings') || '{"theme":"dark","highContrast":false}');
-        let lastTouchDistance = null;
+        let initialRect = null;
         let undoStack = [];
         let redoStack = [];
         let lastUpdate = 0;
         let snapToGridEnabled = false;
+        let redrawTimeout = null;
 
         // Layer Manager
         class LayerManager {
@@ -529,7 +559,7 @@ HTML
                 this.currentLayerIndex = 0;
             }
 
-            addLayer(objects = [], name = Layer ${this.layers.length + 1}) {
+            addLayer(objects = [], name = `Layer ${this.layers.length + 1}`) {
                 this.layers.push({ objects, visible: true, locked: false, name });
                 this.currentLayerIndex = this.layers.length - 1;
                 updateLayerSelect();
@@ -543,6 +573,13 @@ HTML
                     drawCanvas();
                 } else {
                     console.warn("Cannot remove the last layer.");
+                }
+            }
+
+            renameLayer(index, newName) {
+                if (this.layers[index]) {
+                    this.layers[index].name = newName || `Layer ${index + 1}`;
+                    updateLayerSelect();
                 }
             }
 
@@ -608,7 +645,12 @@ HTML
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.onload = () => resolve(img);
-                img.onerror = reject;
+                img.onerror = () => {
+                    document.getElementById('error-message').textContent = 'Failed to load image. Please try another file.';
+                    document.getElementById('error-message').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('error-message').classList.add('hidden'), 5000);
+                    reject(new Error('Image load failed'));
+                };
                 img.src = URL.createObjectURL(file);
             });
         }
@@ -683,7 +725,7 @@ HTML
 
         function hslToRgbString(h, s, l, a = 1) {
             const [r, g, b] = hslToRgb(h, s, l);
-            return rgba(${r}, ${g}, ${b}, ${a});
+            return `rgba(${r}, ${g}, ${b}, ${a})`;
         }
 
         function hexToRgb(hex) {
@@ -701,8 +743,8 @@ HTML
             const hex = hslToHex(currentColor.h, currentColor.s, currentColor.l);
             const { r, g, b } = hexToRgb(hex);
             document.getElementById('hex-input').value = hex;
-            document.getElementById('rgb-input').value = <span class="math-inline">\{r\},</span>{g},${b};
-            document.getElementById('hsl-input').value = <span class="math-inline">\{Math\.round\(currentColor\.h\)\},</span>{currentColor.s}%,${currentColor.l}%;
+            document.getElementById('rgb-input').value = `${r},${g},${b}`;
+            document.getElementById('hsl-input').value = `${Math.round(currentColor.h)},${currentColor.s}%,${currentColor.l}%`;
             document.getElementById('native-picker').value = hex;
         }
 
@@ -717,7 +759,9 @@ HTML
                 fillInput.value = selectedObject.fill !== 'transparent' ? rgbToHex(...selectedObject.fill.match(/\d+/g).slice(0, 3)) : '#000000';
                 strokeInput.value = rgbToHex(...selectedObject.stroke.match(/\d+/g).slice(0, 3));
                 opacitySlider.value = selectedObject.opacity || 1;
+                opacitySlider.setAttribute('aria-valuenow', opacitySlider.value);
                 strokeWidthSlider.value = selectedObject.strokeWidth || 1;
+                strokeWidthSlider.setAttribute('aria-valuenow', strokeWidthSlider.value);
             } else {
                 panel.classList.add('hidden');
             }
@@ -739,108 +783,100 @@ HTML
         }
 
         function drawCanvas() {
-            const ctx = document.getElementById('drawing-canvas').getContext('
+            clearTimeout(redrawTimeout);
+            redrawTimeout = setTimeout(() => {
+                const ctx = document.getElementById('drawing-canvas').getContext('2d');
+                ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                layerManager.getVisibleObjects().forEach(obj => {
+                    ctx.globalAlpha = obj.opacity || 1;
+                    ctx.fillStyle = document.getElementById('fill-toggle').checked ? obj.fill : 'transparent';
+                    ctx.strokeStyle = obj.stroke;
+                    ctx.lineWidth = Math.max(0.1, obj.strokeWidth);
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    if (obj.strokeStyle === 'dashed') {
+                        ctx.setLineDash([5, 5]);
+                    } else if (obj.strokeStyle === 'dotted') {
+                        ctx.setLineDash([2, 2]);
+                    } else {
+                        ctx.setLineDash([]);
+                    }
 
+                    switch (obj.type) {
+                        case 'path':
+                            ctx.beginPath();
+                            obj.points.forEach((p, i) => {
+                                const x = p.x;
+                                const y = p.y;
+                                if (i === 0) {
+                                    ctx.moveTo(x, y);
+                                } else {
+                                    ctx.lineTo(x, y);
+                                }
+                            });
+                            ctx.stroke();
+                            if (document.getElementById('fill-toggle').checked && obj.fill !== 'transparent') {
+                                ctx.fill();
+                            }
+                            break;
+                        case 'rect':
+                            ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                            ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+                            break;
+                        case 'circle':
+                            ctx.beginPath();
+                            ctx.arc(obj.cx, obj.cy, obj.r, 0, 2 * Math.PI);
+                            ctx.fill();
+                            ctx.stroke();
+                            break;
+                        case 'text':
+                            ctx.font = `${obj.size || 16}px Inter`;
+                            ctx.textAlign = 'left';
+                            ctx.textBaseline = 'top';
+                            ctx.fillStyle = obj.fill;
+                            ctx.fillText(obj.text, obj.x, obj.y);
+                            if (obj.stroke !== 'transparent') {
+                                ctx.strokeText(obj.text, obj.x, obj.y);
+                            }
+                            break;
+                    }
+                    ctx.globalAlpha = 1;
+                });
 
-
-
-closer, soo close x
-
-
-HTML
-
-drawing-canvas').getContext('2d');
-            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-            layerManager.getVisibleObjects().forEach(obj => {
-                ctx.globalAlpha = obj.opacity || 1;
-                ctx.fillStyle = document.getElementById('fill-toggle').checked ? obj.fill : 'transparent';
-                ctx.strokeStyle = obj.stroke;
-                ctx.lineWidth = obj.strokeWidth;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                if (obj.strokeStyle === 'dashed') {
+                if (selectedObject) {
+                    ctx.strokeStyle = '#0ff';
+                    ctx.lineWidth = 1;
                     ctx.setLineDash([5, 5]);
-                } else if (obj.strokeStyle === 'dotted') {
-                    ctx.setLineDash([2, 2]);
-                } else {
+                    switch (selectedObject.type) {
+                        case 'rect':
+                            ctx.strokeRect(selectedObject.x, selectedObject.y, selectedObject.width, selectedObject.height);
+                            break;
+                        case 'circle':
+                            ctx.beginPath();
+                            ctx.arc(selectedObject.cx, selectedObject.cy, selectedObject.r, 0, 2 * Math.PI);
+                            ctx.stroke();
+                            break;
+                        case 'text':
+                            ctx.strokeRect(selectedObject.x, selectedObject.y, ctx.measureText(selectedObject.text).width, selectedObject.size || 16);
+                            break;
+                    }
                     ctx.setLineDash([]);
                 }
-
-                switch (obj.type) {
-                    case 'path':
-                        ctx.beginPath();
-                        obj.points.forEach((p, i) => {
-                            const x = p.x;
-                            const y = p.y;
-                            if (i === 0) {
-                                ctx.moveTo(x, y);
-                            } else {
-                                ctx.lineTo(x, y);
-                            }
-                        });
-                        ctx.stroke();
-                        if (document.getElementById('fill-toggle').checked && obj.fill !== 'transparent') {
-                            ctx.fill();
-                        }
-                        break;
-                    case 'rect':
-                        ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
-                        ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
-                        break;
-                    case 'circle':
-                        ctx.beginPath();
-                        ctx.arc(obj.cx, obj.cy, obj.r, 0, 2 * Math.PI);
-                        ctx.fill();
-                        ctx.stroke();
-                        break;
-                    case 'text':
-                        ctx.font = ${obj.size || 16}px Inter;
-                        ctx.textAlign = 'left';
-                        ctx.textBaseline = 'top';
-                        ctx.fillStyle = obj.fill;
-                        ctx.fillText(obj.text, obj.x, obj.y);
-                        if (obj.stroke !== 'transparent') {
-                            ctx.strokeText(obj.text, obj.x, obj.y);
-                        }
-                        break;
-                }
-                ctx.globalAlpha = 1;
-            });
-
-            if (selectedObject) {
-                ctx.strokeStyle = '#0ff';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([5, 5]);
-                switch (selectedObject.type) {
-                    case 'rect':
-                        ctx.strokeRect(selectedObject.x, selectedObject.y, selectedObject.width, selectedObject.height);
-                        break;
-                    case 'circle':
-                        ctx.beginPath();
-                        ctx.arc(selectedObject.cx, selectedObject.cy, selectedObject.r, 0, 2 * Math.PI);
-                        ctx.stroke();
-                        break;
-                    case 'text':
-                        ctx.strokeRect(selectedObject.x, selectedObject.y, ctx.measureText(selectedObject.text).width, selectedObject.size || 16);
-                        break;
-                }
-                ctx.setLineDash([]);
-            }
+            }, 16); // ~60fps
         }
-
-        function canvasToSvg() {
+function canvasToSvg() {
             const svgNS = 'http://www.w3.org/2000/svg';
             const svg = document.createElementNS(svgNS, 'svg');
             svg.setAttribute('width', CANVAS_WIDTH);
             svg.setAttribute('height', CANVAS_HEIGHT);
-            svg.setAttribute('viewBox', 0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT});
+            svg.setAttribute('viewBox', `0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`);
 
             layerManager.getVisibleObjects().forEach(obj => {
                 let element;
                 switch (obj.type) {
                     case 'path':
                         element = document.createElementNS(svgNS, 'path');
-                        element.setAttribute('d', M${obj.points.map(p => ${p.x},${p.y}).join(' L')});
+                        element.setAttribute('d', `M${obj.points.map(p => `${p.x},${p.y}`).join(' L')}`);
                         element.setAttribute('fill', document.getElementById('fill-toggle').checked ? obj.fill : 'none');
                         element.setAttribute('stroke', obj.stroke);
                         element.setAttribute('stroke-width', obj.strokeWidth);
@@ -895,6 +931,7 @@ drawing-canvas').getContext('2d');
             document.getElementById('svg-output').textContent = svgString;
             document.getElementById('preview-window').innerHTML = svgString;
             document.getElementById('preview-window').classList.remove('hidden');
+            return svgString;
         }
 
         function downloadSvg(svgString, filename = 'vectorized.svg') {
@@ -923,7 +960,7 @@ drawing-canvas').getContext('2d');
                 ctx.globalAlpha = obj.opacity || 1;
                 ctx.fillStyle = document.getElementById('fill-toggle').checked ? obj.fill : 'transparent';
                 ctx.strokeStyle = obj.stroke;
-                ctx.lineWidth = obj.strokeWidth;
+                ctx.lineWidth = Math.max(0.1, obj.strokeWidth);
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
                 if (obj.strokeStyle === 'dashed') {
@@ -962,7 +999,7 @@ drawing-canvas').getContext('2d');
                         ctx.stroke();
                         break;
                     case 'text':
-                        ctx.font = ${obj.size || 16}px Inter;
+                        ctx.font = `${obj.size || 16}px Inter`;
                         ctx.textAlign = 'left';
                         ctx.textBaseline = 'top';
                         ctx.fillStyle = obj.fill;
@@ -1047,7 +1084,7 @@ drawing-canvas').getContext('2d');
             layerManager.layers.forEach((layer, index) => {
                 const option = document.createElement('option');
                 option.value = index;
-                option.textContent = <span class="math-inline">\{layer\.name\} \(</span>{layer.visible ? 'Visible' : 'Hidden'}, ${layer.locked ? 'Locked' : 'Unlocked'});
+                option.textContent = `${layer.name} (${layer.visible ? 'Visible' : 'Hidden'}, ${layer.locked ? 'Locked' : 'Unlocked'})`;
                 option.selected = index === layerManager.currentLayerIndex;
                 layerSelect.appendChild(option);
             });
@@ -1135,17 +1172,7 @@ drawing-canvas').getContext('2d');
             const lightnessSlider = document.getElementById('lightness-slider');
             const opacitySlider = document.getElementById('opacity-slider');
             const strokeWidthSlider = document.getElementById('stroke-width-slider');
-            const hexInput
-
-
-
-
-last 2 and your/we're done!! x
-
-
-HTML
-
-            = document.getElementById('hex-input');
+            const hexInput = document.getElementById('hex-input');
             const rgbInput = document.getElementById('rgb-input');
             const hslInput = document.getElementById('hsl-input');
             const nativePicker = document.getElementById('native-picker');
@@ -1192,6 +1219,7 @@ HTML
             const objectStrokeWidthSlider = document.getElementById('object-stroke-width-slider');
             const gridElement = document.getElementById('grid');
             const tooltipElement = document.getElementById('tooltip');
+            const textInput = document.getElementById('text-input');
 
             applySettings();
             updateSwatchesDisplay();
@@ -1230,6 +1258,10 @@ HTML
 
             colorWheel.addEventListener('mousedown', (e) => {
                 isColorDragging = true;
+                handleColorWheelPick(e);
+            });
+
+            function handleColorWheelPick(e) {
                 const rect = colorWheel.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
@@ -1242,20 +1274,11 @@ HTML
                     currentColor.s = (distance / 50) * 100;
                     updateColorInputs();
                 }
-            });
+            }
 
             document.addEventListener('mousemove', (e) => {
                 if (!isColorDragging) return;
-                const rect = colorWheel.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const dx = x - 50;
-                const dy = y - 50;
-                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                currentColor.h = (angle < 0 ? angle + 360 : angle);
-                currentColor.s = Math.max(0, Math.min(100, (distance / 50) * 100));
-                updateColorInputs();
+                handleColorWheelPick(e);
             });
 
             document.addEventListener('mouseup', () => {
@@ -1264,19 +1287,31 @@ HTML
 
             lightnessSlider.addEventListener('input', () => {
                 currentColor.l = parseInt(lightnessSlider.value);
+                lightnessSlider.setAttribute('aria-valuenow', lightnessSlider.value);
                 updateColorInputs();
+                showTooltip(`Lightness: ${lightnessSlider.value}%`, lightnessSlider.getBoundingClientRect().left, lightnessSlider.getBoundingClientRect().top - 30);
             });
+
+            lightnessSlider.addEventListener('mouseout', hideTooltip);
 
             opacitySlider.addEventListener('input', () => {
                 currentColor.a = parseFloat(opacitySlider.value);
+                opacitySlider.setAttribute('aria-valuenow', opacitySlider.value);
                 updateColorInputs();
+                showTooltip(`Opacity: ${(opacitySlider.value * 100).toFixed(0)}%`, opacitySlider.getBoundingClientRect().left, opacitySlider.getBoundingClientRect().top - 30);
             });
 
+            opacitySlider.addEventListener('mouseout', hideTooltip);
+
             strokeWidthSlider.addEventListener('input', () => {
-                // Apply stroke width directly to the current drawing context for preview
+                const value = Math.max(0.1, parseInt(strokeWidthSlider.value));
+                strokeWidthSlider.setAttribute('aria-valuenow', value);
                 const tempCtx = drawingCanvas.getContext('2d');
-                tempCtx.lineWidth = parseInt(strokeWidthSlider.value);
+                tempCtx.lineWidth = value;
+                showTooltip(`Stroke: ${value}px`, strokeWidthSlider.getBoundingClientRect().left, strokeWidthSlider.getBoundingClientRect().top - 30);
             });
+
+            strokeWidthSlider.addEventListener('mouseout', hideTooltip);
 
             hexInput.addEventListener('input', () => {
                 const hex = hexInput.value;
@@ -1323,7 +1358,8 @@ HTML
             eyedropperToolButton.addEventListener('click', () => {
                 currentTool = 'eyedropper';
                 setActiveTool(eyedropperToolButton);
-                drawingCanvas.style.cursor = 'crosshair'; // Indicate eyedropper
+                drawingCanvas.style.cursor = 'crosshair';
+                colorWheel.style.cursor = 'crosshair';
             });
 
             fillToggle.addEventListener('change', () => {
@@ -1334,18 +1370,21 @@ HTML
                 currentTool = 'pen';
                 setActiveTool(penToolButton);
                 drawingCanvas.style.cursor = 'crosshair';
+                textInput.classList.add('hidden');
             });
 
             rectToolButton.addEventListener('click', () => {
                 currentTool = 'rect';
                 setActiveTool(rectToolButton);
                 drawingCanvas.style.cursor = 'crosshair';
+                textInput.classList.add('hidden');
             });
 
             circleToolButton.addEventListener('click', () => {
                 currentTool = 'circle';
                 setActiveTool(circleToolButton);
                 drawingCanvas.style.cursor = 'crosshair';
+                textInput.classList.add('hidden');
             });
 
             textToolButton.addEventListener('click', () => {
@@ -1359,6 +1398,7 @@ HTML
                 setActiveTool(selectToolButton);
                 drawingCanvas.style.cursor = 'pointer';
                 updatePropertiesPanel();
+                textInput.classList.add('hidden');
             });
 
             undoButton.addEventListener('click', undo);
@@ -1392,9 +1432,10 @@ HTML
                     const hsl = rgbToHslObject(pixel[0], pixel[1], pixel[2]);
                     currentColor = { ...hsl, a: currentColor.a };
                     updateColorInputs();
-                    currentTool = 'pen'; // Revert to pen after picking
+                    currentTool = 'pen';
                     setActiveTool(penToolButton);
                     drawingCanvas.style.cursor = 'crosshair';
+                    colorWheel.style.cursor = 'pointer';
                     return;
                 }
 
@@ -1406,6 +1447,14 @@ HTML
                 selectedObject = null;
                 updatePropertiesPanel();
 
+                if (currentTool === 'text') {
+                    textInput.style.left = `${startPos.x + drawingCanvas.getBoundingClientRect().left}px`;
+                    textInput.style.top = `${startPos.y + drawingCanvas.getBoundingClientRect().top}px`;
+                    textInput.classList.remove('hidden');
+                    textInput.focus();
+                    textInput.value = '';
+                }
+
                 if (currentTool === 'select') {
                     const x = e.clientX - drawingCanvas.getBoundingClientRect().left;
                     const y = e.clientY - drawingCanvas.getBoundingClientRect().top;
@@ -1416,7 +1465,6 @@ HTML
                             case 'circle':
                                 return Math.sqrt((x - obj.cx) ** 2 + (y - obj.cy) ** 2) <= obj.r;
                             case 'path':
-                                // Basic point in polygon check (can be improved)
                                 return obj.points.some(p => Math.abs(x - p.x) < 5 && Math.abs(y - p.y) < 5);
                             case 'text':
                                 const textWidth = drawingCanvas.getContext('2d').measureText(obj.text).width;
@@ -1437,7 +1485,7 @@ HTML
                 currentPos.x = snapToGrid(currentPos.x);
                 currentPos.y = snapToGrid(currentPos.y);
 
-                const tempObjects = [...layerManager.getActiveObjects()]; // Create a copy for preview
+                const tempObjects = [...layerManager.getActiveObjects()];
 
                 switch (currentTool) {
                     case 'pen':
@@ -1452,7 +1500,7 @@ HTML
                             height: Math.abs(currentPos.y - startPos.y),
                             fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
                             stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
-                            strokeWidth: parseInt(strokeWidthSlider.value),
+                            strokeWidth: Math.max(0.1, parseInt(strokeWidthSlider.value)),
                             strokeStyle: document.getElementById('stroke-style').value,
                             opacity: parseFloat(opacitySlider.value)
                         };
@@ -1469,14 +1517,13 @@ HTML
                             r: radius,
                             fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
                             stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
-                            strokeWidth: parseInt(strokeWidthSlider.value),
+                            strokeWidth: Math.max(0.1, parseInt(strokeWidthSlider.value)),
                             strokeStyle: document.getElementById('stroke-style').value,
                             opacity: parseFloat(opacitySlider.value)
                         };
                         tempObjects.push(circle);
                         break;
                     case 'text':
-                        // For text, we'll add on mouseup
                         break;
                 }
                 // Preview the current shape
@@ -1486,7 +1533,7 @@ HTML
                     ctx.globalAlpha = obj.opacity || 1;
                     ctx.fillStyle = document.getElementById('fill-toggle').checked ? obj.fill : 'transparent';
                     ctx.strokeStyle = obj.stroke;
-                    ctx.lineWidth = obj.strokeWidth;
+                    ctx.lineWidth = Math.max(0.1, obj.strokeWidth);
                     ctx.lineCap = 'round';
                     ctx.lineJoin = 'round';
                     if (obj.strokeStyle === 'dashed') {
@@ -1512,22 +1559,12 @@ HTML
                             break;
                         case 'circle':
                             ctx.beginPath();
-                            ctx.arc(obj.cx, obj.cy, obj.r, 0,
-
-
-
-
-sooooooo close little sister
-
-
-HTML
-
-2 * Math.PI);
+                            ctx.arc(obj.cx, obj.cy, obj.r, 0, 2 * Math.PI);
                             ctx.fill();
                             ctx.stroke();
                             break;
                         case 'text':
-                            ctx.font = ${obj.size || 16}px Inter;
+                            ctx.font = `${obj.size || 16}px Inter`;
                             ctx.textAlign = 'left';
                             ctx.textBaseline = 'top';
                             ctx.fillStyle = obj.fill;
@@ -1544,7 +1581,7 @@ HTML
                 ctx.globalAlpha = parseFloat(opacitySlider.value);
                 ctx.fillStyle = document.getElementById('fill-toggle').checked ? hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a) : 'transparent';
                 ctx.strokeStyle = hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a);
-                ctx.lineWidth = parseInt(strokeWidthSlider.value);
+                ctx.lineWidth = Math.max(0.1, parseInt(strokeWidthSlider.value));
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
                 if (document.getElementById('stroke-style').value === 'dashed') {
@@ -1591,7 +1628,7 @@ HTML
                         points: [...currentPath],
                         fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
                         stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
-                        strokeWidth: parseInt(strokeWidthSlider.value),
+                        strokeWidth: Math.max(0.1, parseInt(strokeWidthSlider.value)),
                         strokeStyle: document.getElementById('stroke-style').value,
                         opacity: parseFloat(opacitySlider.value)
                     });
@@ -1604,14 +1641,15 @@ HTML
                         height: Math.abs(currentPos.y - startPos.y),
                         fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
                         stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
-                        strokeWidth: parseInt(strokeWidthSlider.value),
+                        strokeWidth: Math.max(0.1, parseInt(strokeWidthSlider.value)),
                         strokeStyle: document.getElementById('stroke-style').value,
                         opacity: parseFloat(opacitySlider.value)
                     });
                 } else if (currentTool === 'circle') {
                     const radius = Math.sqrt((currentPos.x - startPos.x) ** 2 + (currentPos.y - startPos.y) ** 2) / 2;
                     const centerX = (startPos.x + currentPos.x) / 2;
-                    const centerY = (startPos.y + currentPos.y) / 2;
+                    const 
+centerY = (startPos.y + currentPos.y) / 2;
                     layerManager.addObject({
                         type: 'circle',
                         cx: centerX,
@@ -1619,270 +1657,217 @@ HTML
                         r: radius,
                         fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
                         stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
-                        strokeWidth: parseInt(strokeWidthSlider.value),
+                        strokeWidth: Math.max(0.1, parseInt(strokeWidthSlider.value)),
                         strokeStyle: document.getElementById('stroke-style').value,
                         opacity: parseFloat(opacitySlider.value)
                     });
-                } else if (currentTool === 'text' && startPos) {
-                    const text = prompt("Enter text:");
-                    if (text) {
-                        layerManager.addObject({
-                            type: 'text',
-                            x: startPos.x,
-                            y: startPos.y,
-                            text: text,
-                            fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
-                            stroke: 'transparent',
-                            size: 24,
-                            opacity: parseFloat(opacitySlider.value)
-                        });
-                    }
                 }
                 currentPath = [];
                 startPos = null;
                 drawCanvas();
-                saveState();
             });
 
             drawingCanvas.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1) {
-                    const touch = e.touches[0];
-                    startPos = { x: touch.clientX - drawingCanvas.getBoundingClientRect().left, y: touch.clientY - drawingCanvas.getBoundingClientRect().top };
-                    startPos.x = snapToGrid(startPos.x);
-                    startPos.y = snapToGrid(startPos.y);
-                    isDrawing = true;
-                    currentPath = [startPos];
-                    e.preventDefault(); // Prevent scrolling
-                } else if (e.touches.length === 2 && currentTool === 'select' && selectedObject && selectedObject.type === 'rect') {
-                    // Basic pinch to scale (very rough)
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    lastTouchDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
-                    initialRect = { ...selectedObject };
-                }
-            }, { passive: false });
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                drawingCanvas.dispatchEvent(mouseEvent);
+            });
 
             drawingCanvas.addEventListener('touchmove', (e) => {
-                if (!isDrawing) return;
-                if (e.touches.length === 1) {
-                    const touch = e.touches[0];
-                    const currentPos = { x: touch.clientX - drawingCanvas.getBoundingClientRect().left, y: touch.clientY - drawingCanvas.getBoundingClientRect().top };
-                    currentPos.x = snapToGrid(currentPos.x);
-                    currentPos.y = snapToGrid(currentPos.y);
-                    currentPath.push(currentPos);
-                    e.preventDefault(); // Prevent scrolling
-                } else if (e.touches.length === 2 && currentTool === 'select' && selectedObject && selectedObject.type === 'rect' && lastTouchDistance !== null) {
-                    const touch1 = e.touches[0];
-                    const touch2 = e.touches[1];
-                    const currentDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
-                    const scaleFactor = currentDistance / lastTouchDistance;
-                    selectedObject.width = Math.max(0, initialRect.width * scaleFactor);
-                    selectedObject.height = Math.max(0, initialRect.height * scaleFactor);
-                    drawCanvas();
-                    updatePropertiesPanel();
-                    e.preventDefault();
-                }
-            }, { passive: false });
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                drawingCanvas.dispatchEvent(mouseEvent);
+            });
 
-            drawingCanvas.addEventListener('touchend', () => {
-                if (!isDrawing) return;
-                isDrawing = false;
-                if (currentTool === 'pen' && currentPath.length > 1) {
-                    layerManager.addObject({
-                        type: 'path',
-                        points: [...currentPath],
-                        fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
-                        stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
-                        strokeWidth: parseInt(strokeWidthSlider.value),
-                        strokeStyle: document.getElementById('stroke-style').value,
-                        opacity: parseFloat(opacitySlider.value)
-                    });
-                } else if (currentTool === 'rect') {
-                    layerManager.addObject({
-                        type: 'rect',
-                        x: Math.min(startPos.x, currentPos.x),
-                        y: Math.min(startPos.y, currentPos.y),
-                        width: Math.abs(currentPos.x - startPos.x),
-                        height: Math.abs(currentPos.y - startPos.y),
-                        fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
-                        stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
-                        strokeWidth: parseInt(strokeWidthSlider.value),
-                        strokeStyle: document.getElementById('stroke-style').value,
-                        opacity: parseFloat(opacitySlider.value)
-                    });
-                } else if (currentTool === 'circle') {
-                    const radius = Math.sqrt((currentPos.x - startPos.x) ** 2 + (currentPos.y - startPos.y) ** 2) / 2;
-                    const centerX = (startPos.x + currentPos.x) / 2;
-                    const centerY = (startPos.y + currentPos.y) / 2;
-                    layerManager.addObject({
-                        type: 'circle',
-                        cx: centerX,
-                        cy: centerY,
-                        r: radius,
-                        fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
-                        stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
-                        strokeWidth: parseInt(strokeWidthSlider.value),
-                        strokeStyle: document.getElementById('stroke-style').value,
-                        opacity: parseFloat(opacitySlider.value)
-                    });
-                } else if (currentTool === 'text' && startPos) {
-                    const text = prompt("Enter text:");
+            drawingCanvas.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const mouseEvent = new MouseEvent('mouseup', {});
+                drawingCanvas.dispatchEvent(mouseEvent);
+            });
+
+            textInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const text = textInput.value.trim();
                     if (text) {
                         layerManager.addObject({
                             type: 'text',
-                            x: startPos.x,
-                            y: startPos.y,
                             text: text,
+                            x: parseFloat(textInput.style.left) - drawingCanvas.getBoundingClientRect().left,
+                            y: parseFloat(textInput.style.top) - drawingCanvas.getBoundingClientRect().top,
+                            size: 16,
                             fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
-                            stroke: 'transparent',
-                            size: 24,
+                            stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                            strokeWidth: Math.max(0.1, parseInt(strokeWidthSlider.value)),
+                            strokeStyle: document.getElementById('stroke-style').value,
                             opacity: parseFloat(opacitySlider.value)
                         });
                     }
+                    textInput.classList.add('hidden');
+                    currentTool = 'pen';
+                    setActiveTool(penToolButton);
+                    drawingCanvas.style.cursor = 'crosshair';
+                } else if (e.key === 'Escape') {
+                    textInput.classList.add('hidden');
+                    currentTool = 'pen';
+                    setActiveTool(penToolButton);
+                    drawingCanvas.style.cursor = 'crosshair';
                 }
-                currentPath = [];
-                startPos = null;
-                lastTouchDistance = null;
-                initialRect = null;
-                drawCanvas();
-                saveState();
+            });
+
+            colorWheel.addEventListener('click', (e) => {
+                if (currentTool === 'eyedropper') {
+                    handleColorWheelPick(e);
+                    currentTool = 'pen';
+                    setActiveTool(penToolButton);
+                    drawingCanvas.style.cursor = 'crosshair';
+                    colorWheel.style.cursor = 'pointer';
+                }
             });
 
             uploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                uploadArea.classList.add('dragover');
+                uploadArea.style.borderColor = '#0ff';
             });
 
             uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
+                uploadArea.style.borderColor = '#888';
             });
 
             uploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                const file = e.dataTransfer.files[0];
-                handleFile(file);
+                uploadArea.style.borderColor = '#888';
+                handleFile(e.dataTransfer.files[0]);
+            });
+
+            fileUpload.addEventListener('change', (e) => {
+                handleFile(e.target.files[0]);
             });
 
             browseButton.addEventListener('click', () => {
                 fileUpload.click();
             });
 
-            fileUpload.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                handleFile(file);
-                e.target.value = null; // Reset file input
-            });
-
-            function handleFile(file) {
+            async function handleFile(file) {
                 if (!file) return;
-                if (!VALID_TYPES.includes(file.type)) {
-                    document.getElementById('error-message').textContent = 'Invalid file type. Only JPG, PNG, and SVG are supported.';
-                    document.getElementById('error-message').classList.remove('hidden');
-                    setTimeout(() => document.getElementById('error-message').classList.add('hidden'), 5000);
-                    return;
-                }
-                if (file.size > MAX_FILE_SIZE) {
-                    document.getElementById('error-message').textContent = File size exceeds the limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB.;
-                    document.getElementById('error-message').classList.remove('hidden');
-                    setTimeout(() => document.getElementById('error-message').classList.add('hidden'), 5000);
-                    return;
-                }
 
-                document.getElementById('upload-instructions').textContent = Processing ${file.name}...;
+                document.getElementById('loading-message').classList.remove('hidden');
+                document.getElementById('progress-fill').style.width = '0%';
+
+                const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                document.getElementById('upload-instructions').textContent = `Uploaded: ${file.name} (${fileSizeMB}MB)`;
                 document.getElementById('upload-instructions').classList.remove('hidden');
-                document.getElementById('progress-bar').classList.remove('hidden');
-                document.getElementById('progress-fill').style.width = '30%';
 
-                setTimeout(async () => {
-                    document.getElementById('progress-fill').style.width = '70%';
-                    if (file.type.startsWith('image/')) {
+                if (!VALID_TYPES.includes(file.type)) {
+                    document.getElementById('error-message').textContent = 'Invalid file type. Please upload a JPG, PNG, or SVG.';
+                    document.getElementById('error-message').classList.remove('hidden');
+                    uploadArea.classList.add('invalid');
+                    setTimeout(() => {
+                        document.getElementById('error-message').classList.add('hidden');
+                        uploadArea.classList.remove('invalid');
+                        document.getElementById('upload-instructions').classList.add('hidden');
+                    }, 5000);
+                    document.getElementById('loading-message').classList.add('hidden');
+                    return;
+                }
+
+                if (file.size > MAX_FILE_SIZE) {
+                    document.getElementById('error-message').textContent = 'File too large. Maximum size is 5MB.';
+                    document.getElementById('error-message').classList.remove('hidden');
+                    uploadArea.classList.add('invalid');
+                    setTimeout(() => {
+                        document.getElementById('error-message').classList.add('hidden');
+                        uploadArea.classList.remove('invalid');
+                        document.getElementById('upload-instructions').classList.add('hidden');
+                    }, 5000);
+                    document.getElementById('loading-message').classList.add('hidden');
+                    return;
+                }
+
+                try {
+                    if (file.type === 'image/svg+xml') {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const svgString = e.target.result;
+                            layerManager.addObject({
+                                type: 'rect',
+                                x: 0,
+                                y: 0,
+                                width: CANVAS_WIDTH,
+                                height: CANVAS_HEIGHT,
+                                fill: `url(data:image/svg+xml;base64,${btoa(svgString)})`,
+                                stroke: 'transparent',
+                                strokeWidth: 0,
+                                opacity: 1
+                            });
+                            document.getElementById('canvas-section').classList.remove('hidden');
+                            document.getElementById('export-section').classList.remove('hidden');
+                            document.getElementById('loading-message').classList.add('hidden');
+                            document.getElementById('progress-fill').style.width = '100%';
+                            drawCanvas();
+                        };
+                        reader.readAsText(file);
+                    } else {
                         const img = await loadImage(file);
-                        // Basic image import as a rectangle for now
+                        const thumbnail = document.getElementById('thumbnail-preview');
+                        thumbnail.src = img.src;
+                        thumbnail.style.display = 'block';
+
+                        const ctx = drawingCanvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
                         layerManager.addObject({
                             type: 'rect',
-                            x: 50,
-                            y: 50,
-                            width: img.width > 500 ? 300 : img.width,
-                            height: img.height > 300 ? 200 : img.height,
-                            fill: url(blob:${img.src}),
+                            x: 0,
+                            y: 0,
+                            width: CANVAS_WIDTH,
+                            height: CANVAS_HEIGHT,
+                            fill: `url(${img.src})`,
                             stroke: 'transparent',
                             strokeWidth: 0,
                             opacity: 1
                         });
+
+                        document.getElementById('canvas-section').classList.remove('hidden');
+                        document.getElementById('export-section').classList.remove('hidden');
+                        document.getElementById('loading-message').classList.add('hidden');
+                        document.getElementById('progress-fill').style.width = '100%';
                         drawCanvas();
-                    } else if (file.type === 'image/svg+xml') {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            document.getElementById('preview-window').innerHTML = e.target.result;
-                            // Basic SVG import - more complex parsing might be needed
-                            const svgElement = document.querySelector('#preview-window svg');
-                            if (svgElement) {
-                                const width = parseFloat(svgElement.getAttribute('width') || 200);
-                                const height = parseFloat(svgElement.getAttribute('height') || 150);
-                                const svgDataUrl = data:image/svg+xml;base64,${btoa(e.target.result)};
-                                layerManager.addObject({
-                                    type: 'rect',
-                                    x: 80,
-                                    y: 80,
-                                    width: width > 500 ? 300 : width,
-                                    height: height > 300 ? 200 : height,
-                                    fill: url(${svgDataUrl}),
-                                    stroke: 'transparent',
-                                    strokeWidth: 0,
-                                    opacity: 1
-                                });
-                                drawCanvas();
-                            }
-                        };
-                        reader.readAsText(file);
                     }
-                    document.getElementById('progress-fill').style.width = '100%';
-                    document.getElementById('upload-instructions').classList.add('hidden');
-                    setTimeout(() => document.getElementById('progress-bar').classList.add('hidden'), 1000);
-                }, 500);
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    document.getElementById('error-message').textContent = 'Failed to process file. Please try another.';
+                    document.getElementById('error-message').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('error-message').classList.add('hidden'), 5000);
+                    document.getElementById('loading-message').classList.add('hidden');
+                }
+
+                fileUpload.value = null;
             }
 
             exportSvgButton.addEventListener('click', () => {
-                canvasToSvg();
-                const svgString = document.getElementById('svg-output').textContent;
+                const svgString = canvasToSvg();
                 downloadSvg(svgString, filenameInput.value + '.svg');
             });
 
             exportPngButton.addEventListener('click', downloadPng);
-            saveProjectButton.addEventListener('click', saveProject);
-            loadProjectButton.addEventListener('click', () => projectUploadInput.click());
-            projectUploadInput.addEventListener('change', loadProject);
 
-            previewModeButton.addEventListener('click', () => {
-                const canvasSection = document.getElementById('canvas-section');
-                const exportSection = document.getElementById('export-section');
-                isPreviewMode = !isPreviewMode;
-                if (isPreviewMode) {
-                    canvasToSvg();
-                    canvasSection.classList.add('hidden');
-                    exportSection.classList.remove('hidden');
-                    previewModeButton.textContent = 'Edit';
-                } else {
-                    canvasSection.classList.remove('hidden');
-                    exportSection.classList.add('hidden');
-                    previewModeButton.textContent = 'Preview';
-                }
+            saveProjectButton.addEventListener('click', saveProject);
+
+            loadProjectButton.addEventListener('click', () => {
+                projectUploadInput.click();
             });
 
-            debugToggle.addEventListener('click
+            projectUploadInput.addEventListener('change', loadProject);
 
-
-
-
-
-last push! x
-
-
-HTML
-
-, () => {
-                debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+            debugToggle.addEventListener('click', () => {
+                debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
             });
 
             closeDebugButton.addEventListener('click', () => {
@@ -1890,7 +1875,7 @@ HTML
             });
 
             helpToggle.addEventListener('click', () => {
-                helpModal.style.display = 'block';
+                helpModal.style.display = helpModal.style.display === 'block' ? 'none' : 'block';
             });
 
             closeHelpButton.addEventListener('click', () => {
@@ -1910,75 +1895,131 @@ HTML
             });
 
             resetButton.addEventListener('click', () => {
-                if (confirm('Are you sure you want to reset the session? All unsaved data will be lost.')) {
-                    localStorage.removeItem('swatches');
-                    localStorage.removeItem('settings');
-                    layerManager.layers = [{ objects: [], visible: true, locked: false, name: 'Layer 1' }];
-                    layerManager.currentLayerIndex = 0;
-                    swatches = [];
-                    settings = {"theme":"dark","highContrast":false};
-                    applySettings();
-                    updateSwatchesDisplay();
-                    updateLayerSelect();
-                    drawCanvas();
-                    undoStack = [];
-                    redoStack = [];
-                }
+                layerManager = new LayerManager();
+                swatches = [];
+                settings = { theme: 'dark', highContrast: false };
+                localStorage.setItem('settings', JSON.stringify(settings));
+                localStorage.setItem('swatches', JSON.stringify(swatches));
+                applySettings();
+                updateSwatchesDisplay();
+                updateLayerSelect();
+                document.getElementById('thumbnail-preview').style.display = 'none';
+                document.getElementById('canvas-section').classList.add('hidden');
+                document.getElementById('export-section').classList.add('hidden');
+                document.getElementById('preview-window').classList.add('hidden');
+                drawCanvas();
             });
 
             layerSelect.addEventListener('change', () => {
                 layerManager.setActiveLayer(parseInt(layerSelect.value));
             });
 
+            layerSelect.addEventListener('dblclick', () => {
+                const index = parseInt(layerSelect.value);
+                const newName = prompt('Enter new layer name:', layerManager.layers[index].name);
+                if (newName) {
+                    layerManager.renameLayer(index, newName);
+                }
+            });
+
             addLayerButton.addEventListener('click', () => {
                 layerManager.addLayer();
-                drawCanvas();
-                saveState();
             });
 
             toggleLayerVisibilityButton.addEventListener('click', () => {
-                const index = layerManager.currentLayerIndex;
-                layerManager.toggleVisibility(index);
+                layerManager.toggleVisibility(layerManager.currentLayerIndex);
             });
 
             toggleLayerLockButton.addEventListener('click', () => {
-                const index = layerManager.currentLayerIndex;
-                layerManager.toggleLock(index);
+                layerManager.toggleLock(layerManager.currentLayerIndex);
             });
 
             snapGridCheckbox.addEventListener('change', () => {
                 snapToGridEnabled = snapGridCheckbox.checked;
+                gridElement.classList.toggle('hidden', !snapToGridEnabled);
             });
 
             objectFillInput.addEventListener('input', () => {
-                if (selectedObject && (/^#?[0-9a-fA-F]{0,6}$/.test(objectFillInput.value))) {
-                    selectedObject.fill = objectFillInput.value;
-                    drawCanvas();
-                    saveState();
+                if (selectedObject) {
+                    const index = layerManager.getActiveObjects().indexOf(selectedObject);
+                    if (index > -1 && /^#?[0-9a-fA-F]{6}$/.test(objectFillInput.value)) {
+                        selectedObject.fill = rgbToHex(...hexToRgb(objectFillInput.value).r, hexToRgb(objectFillInput.value).g, hexToRgb(objectFillInput.value).b);
+                        layerManager.updateObject(index, selectedObject);
+                    }
                 }
             });
 
             objectStrokeInput.addEventListener('input', () => {
-                if (selectedObject && (/^#?[0-9a-fA-F]{0,6}$/.test(objectStrokeInput.value))) {
-                    selectedObject.stroke = objectStrokeInput.value;
-                    drawCanvas();
-                    saveState();
+                if (selectedObject) {
+                    const index = layerManager.getActiveObjects().indexOf(selectedObject);
+                    if (index > -1 && /^#?[0-9a-fA-F]{6}$/.test(objectStrokeInput.value)) {
+                        selectedObject.stroke = rgbToHex(...hexToRgb(objectStrokeInput.value).r, hexToRgb(objectStrokeInput.value).g, hexToRgb(objectStrokeInput.value).b);
+                        layerManager.updateObject(index, selectedObject);
+                    }
                 }
             });
 
             objectOpacitySlider.addEventListener('input', () => {
                 if (selectedObject) {
-                    selectedObject.opacity = parseFloat(objectOpacitySlider.value);
-                    drawCanvas();
-                    saveState();
+                    const index = layerManager.getActiveObjects().indexOf(selectedObject);
+                    if (index > -1) {
+                        selectedObject.opacity = parseFloat(objectOpacitySlider.value);
+                        objectOpacitySlider.setAttribute('aria-valuenow', objectOpacitySlider.value);
+                        layerManager.updateObject(index, selectedObject);
+                        showTooltip(`Opacity: ${(objectOpacitySlider.value * 100).toFixed(0)}%`, objectOpacitySlider.getBoundingClientRect().left, objectOpacitySlider.getBoundingClientRect().top - 30);
+                    }
                 }
             });
 
+            objectOpacitySlider.addEventListener('mouseout', hideTooltip);
+
             objectStrokeWidthSlider.addEventListener('input', () => {
                 if (selectedObject) {
-                    selectedObject.strokeWidth = parseInt(objectStrokeWidthSlider.value);
+                    const index = layerManager.getActiveObjects().indexOf(selectedObject);
+                    if (index > -1) {
+                        selectedObject.strokeWidth = Math.max(0.1, parseInt(objectStrokeWidthSlider.value));
+                        objectStrokeWidthSlider.setAttribute('aria-valuenow', objectStrokeWidthSlider.value);
+                        layerManager.updateObject(index, selectedObject);
+                        showTooltip(`Stroke: ${objectStrokeWidthSlider.value}px`, objectStrokeWidthSlider.getBoundingClientRect().left, objectStrokeWidthSlider.getBoundingClientRect().top - 30);
+                    }
+                }
+            });
+
+            objectStrokeWidthSlider.addEventListener('mouseout', hideTooltip);
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === '1') {
+                    currentTool = 'pen';
+                    setActiveTool(penToolButton);
+                    drawingCanvas.style.cursor = 'crosshair';
+                } else if (e.key === '2') {
+                    currentTool = 'rect';
+                    setActiveTool(rectToolButton);
+                    drawingCanvas.style.cursor = 'crosshair';
+                } else if (e.key === '3') {
+                    currentTool = 'circle';
+                    setActiveTool(circleToolButton);
+                    drawingCanvas.style.cursor = 'crosshair';
+                } else if (e.key === '4') {
+                    currentTool = 'text';
+                    setActiveTool(textToolButton);
+                    drawingCanvas.style.cursor = 'text';
+                } else if (e.key.toLowerCase() === 's') {
+                    currentTool = 'select';
+                    setActiveTool(selectToolButton);
+                    drawingCanvas.style.cursor = 'pointer';
+                } else if (e.key === 'Escape') {
+                    selectedObject = null;
+                    updatePropertiesPanel();
                     drawCanvas();
-                    saveState();
+                    textInput.classList.add('hidden');
+                    currentTool = 'pen';
+                    setActiveTool(penToolButton);
+                    drawingCanvas.style.cursor = 'crosshair';
+                } else if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+                    undo();
+                } else if (e.ctrlKey && e.key.toLowerCase() === 'y') {
+                    redo();
                 }
             });
 
@@ -1987,61 +2028,10 @@ HTML
                 button.classList.add('active');
             }
 
-            drawingCanvas.addEventListener('mousemove', (e) => {
-                if (currentTool === 'select' && selectedObject) {
-                    const rect = drawingCanvas.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    // Basic hover effect (can be expanded)
-                    drawingCanvas.style.cursor = 'grab';
-                } else if (currentTool !== 'eyedropper') {
-                    drawingCanvas.style.cursor = 'crosshair';
-                }
-            });
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    isDrawing = false;
-                    currentPath = [];
-                    drawCanvas();
-                } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-                    undo();
-                } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-                    redo();
-                } else if (e.key === 'Delete' && selectedObject) {
-                    const index = layerManager.getActiveObjects().indexOf(selectedObject);
-                    if (index > -1) {
-                        layerManager.removeObject(index);
-                        selectedObject = null;
-                        updatePropertiesPanel();
-                        saveState();
-                    }
-                } else if (e.key === '1') {
-                    penToolButton.click();
-                } else if (e.key === '2') {
-                    rectToolButton.click();
-                } else if (e.key === '3') {
-                    circleToolButton.click();
-                } else if (e.key === '4') {
-                    textToolButton.click();
-                } else if (e.key === 's') {
-                    selectToolButton.click();
-                }
-            });
-
-            // Basic offline detection
-            window.addEventListener('offline', () => {
-                document.getElementById('offline-indicator').classList.remove('hidden');
-            });
-
-            window.addEventListener('online', () => {
-                document.getElementById('offline-indicator').classList.add('hidden');
-            });
-
-            function showTooltip(message, x, y) {
-                tooltipElement.textContent = message;
-                tooltipElement.style.left = ${x + 10}px;
-                tooltipElement.style.top = ${y + 10}px;
+            function showTooltip(text, x, y) {
+                tooltipElement.textContent = text;
+                tooltipElement.style.left = `${x}px`;
+                tooltipElement.style.top = `${y}px`;
                 tooltipElement.style.display = 'block';
             }
 
@@ -2049,29 +2039,9 @@ HTML
                 tooltipElement.style.display = 'none';
             }
 
-            // Example tooltip (can be expanded for other elements)
-            penToolButton.addEventListener('mouseover', (e) => showTooltip('Pen Tool (Freehand Drawing)', e.clientX, e.clientY));
-            penToolButton.addEventListener('mouseout', hideTooltip);
-            rectToolButton.addEventListener('mouseover', (e) => showTooltip('Rectangle Tool', e.clientX, e.clientY));
-            rectToolButton.addEventListener('mouseout', hideTooltip);
-            circleToolButton.addEventListener('mouseover', (e) => showTooltip('Circle Tool', e.clientX, e.clientY));
-            circleToolButton.addEventListener('mouseout', hideTooltip);
-            textToolButton.addEventListener('mouseover', (e) => showTooltip('Text Tool', e.clientX, e.clientY));
-            textToolButton.addEventListener('mouseout', hideTooltip);
-            selectToolButton.addEventListener('mouseover', (e) => showTooltip('Select Tool (Move/Resize)', e.clientX, e.clientY));
-            selectToolButton.addEventListener('mouseout', hideTooltip);
-            undoButton.addEventListener('mouseover', (e) => showTooltip('Undo (Ctrl+Z)', e.clientX, e.clientY));
-            undoButton.addEventListener('mouseout', hideTooltip);
-            redoButton.addEventListener('mouseover', (e) => showTooltip('Redo (Ctrl+Y)', e.clientX, e.clientY));
-            redoButton.addEventListener('mouseout', hideTooltip);
-            deleteButton.addEventListener('mouseover', (e) => showTooltip('Delete Selected Object', e.clientX, e.clientY));
-            deleteButton.addEventListener('mouseout', hideTooltip);
-            clearCanvasButton.addEventListener('mouseover', (e) => showTooltip('Clear Canvas', e.clientX, e.clientY));
-            clearCanvasButton.addEventListener('mouseout', hideTooltip);
-            previewModeButton.addEventListener('mouseover', (e) => showTooltip('Toggle Preview Mode', e.clientX, e.clientY));
-            previewModeButton.addEventListener('mouseout', hideTooltip);
-            snapGridCheckbox.addEventListener('mouseover', (e) => showTooltip('Snap to Grid', e.clientX, e.clientY));
-            snapGridCheckbox.addEventListener('mouseout', hideTooltip);
+            // Generate nonce for local testing
+            const nonce = btoa(Math.random().toString(36).substring(2));
+            document.querySelectorAll('[nonce="doppleit"]').forEach(el => el.setAttribute('nonce', nonce));
         });
     </script>
 </body>

@@ -1,65 +1,82 @@
 # Doppleit Vector v2 Pro
 
-A powerful, private, in-browser vector graphics editor.  
-Create and edit SVG illustrations with speed, clarity, and full control—entirely offline.
+**Reflect Your Vision. Vector Precision.**
 
-## Features
-
-- **🎨 Intuitive Drawing Tools:** Pen (freehand), Rectangle, Circle, and Text tools.
-- **🌈 Full Color Control:** HSL color wheel, lightness/opacity sliders, plus HEX, RGB, and HSL input fields.
-- **✏️ Stroke Styling:** Choose stroke width and toggle between solid, dashed, and dotted lines.
-- **🪄 Fill Toggle:** Quickly enable or disable shape fill.
-- **📚 Layer Management:** Add, lock, and toggle visibility on multiple layers.
-- **🧱 Object Properties:** Select objects and edit their fill, stroke, opacity, and stroke width in a dedicated panel.
-- **↩️ Undo/Redo:** Unlimited stack-based undo and redo.
-- **🗑️ Delete & Clear:** Delete selected objects or clear the entire canvas.
-- **📐 Snap to Grid:** Enable grid snapping for pixel-precise alignment.
-- **📥 Import:** Drag and drop or browse to load JPG, PNG, or SVG files.
-- **📤 Export:** Download your work as SVG or PNG.
-- **💾 Save & Load Projects:** Save your entire session as a JSON file and reload it anytime.
-- **🌙 Themes & Accessibility:** Toggle between dark/light themes and high-contrast mode.
-- **🔍 Debug Panel:** Inspect raw SVG output.
-- **❓ Help Modal:** Quick in-app usage guide.
-- **📴 Offline Indicator:** Alerts you if you're disconnected—though the app runs 100% offline.
-
-## How to Use
-
-1. **Launch:** Open `index.html` in your browser.
-2. **Upload:** Drag in a file or use “Browse Files” to start with an image or SVG.
-3. **Draw:** Select a tool and click/drag on the canvas.
-4. **Color & Style:** Use the color wheel and controls to fine-tune fills and strokes.
-5. **Layers:** Manage multiple object layers with lock/visibility toggles.
-6. **Edit:** Use the Select tool to adjust object properties live.
-7. **Preview & Export:** Toggle “Preview” to view the generated SVG, then export or save your project.
-
-## Project Structure
-
-```
-Doppleit-Vector/
-├── index.html          # Main application file
-├── README.md           # This file
-├── assets/             # (Optional: SVG icons, fonts, etc.)
-└── styles/             # (Optional: external CSS, if separated)
-```
-
-## Contributing
-
-Pull requests are welcome if the project is made open-source.  
-For now, feedback is appreciated via the [Feedback](#) page.
-
-## License
-
-MIT License *(or update with your preferred license)*  
-© 2025 Doppleit. All rights reserved.
-
-## Acknowledgements
-
-- Font: [Inter by Rasmus Andersson](https://rsms.me/inter/)
-- Icons: Inline SVG, original work
-- Color conversion algorithms inspired by [StackOverflow](https://stackoverflow.com/), refined by hand.
-- Built with love by **Carl** 💡
+Doppleit Vector v2 Pro is a powerful, in-browser vector graphics editor designed for creators who demand precision and flexibility. Built with modern web technologies, it offers a vibrant, accessible interface for drawing, editing, and exporting vector graphics—all without server-side processing for maximum privacy.
 
 ---
 
-> This is a handcrafted creative tool designed for privacy, performance, and control.  
-> It runs 100% in-browser. No ads. No tracking. No bloat.
+## ✨ Features
+
+- **Vector Drawing Tools:** Pen, rectangles, circles, and text
+- **Advanced Color Management:** HSL, HEX, RGB, color wheel, sliders, eyedropper
+- **Layer System:** Rename, reorder, toggle visibility/lock
+- **Undo/Redo:** Full edit history (50 actions)
+- **Export Options:** SVG, PNG, and JSON project save/load
+- **Accessibility:** ARIA, high contrast, reduced motion, keyboard shortcuts
+- **Performance:** Debounced redraws, real-time canvas previews
+- **Responsive:** Mobile, touch, desktop — full support
+- **Privacy-First:** All rendering stays in-browser
+
+---
+
+## 🚀 Installation
+
+**No installation needed.** Just open `index.html` in your browser.
+
+Or clone the repo:
+```bash
+git clone https://github.com/your-repo/doppleit-vector.git
+cd doppleit-vector
+python -m http.server
+```
+
+Navigate to [http://localhost:8000](http://localhost:8000)
+
+---
+
+## 🧰 Usage
+
+- **Start Drawing:** Pen (1), Rectangle (2), Circle (3), Text (4)
+- **Color Tools:** Use sliders, wheel, swatches, eyedropper
+- **Layers:** Add, rename (double-click), reorder
+- **Export:** Download as SVG, PNG, or JSON
+- **Keyboard Shortcuts:**
+  - `1-4` → Tool switch
+  - `S` → Select Tool
+  - `Esc` → Cancel / Deselect
+  - `Ctrl+Z / Ctrl+Y` → Undo / Redo
+
+---
+
+## 🛡 Security
+
+- ✅ Strict Content Security Policy
+- ✅ Nonce-based style/script validation
+- ✅ No data sent to server (fully offline)
+- ✅ DOMPurify sanitation on any SVG content
+
+---
+
+## 🧑‍💻 Developer Notes
+
+- Everything lives in `index.html`
+- Written in Vanilla JS, CSS3, and HTML5
+- Uses Canvas and SVG only — no WebGL or WebAssembly
+
+---
+
+## 📃 License
+
+MIT © 2025 Doppleit
+
+---
+
+## 🗣 Contact
+
+Have ideas or feedback?  
+Open an issue or hit us at [doppleit.io/feedback](https://doppleit.io/feedback)
+
+---
+
+**Doppleit Vector v2 Pro** — Where creativity meets control.
