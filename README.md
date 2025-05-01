@@ -1,82 +1,98 @@
 # Doppleit Vector v2 Pro
 
-**Reflect Your Vision. Vector Precision.**
+Welcome to **Doppleit Vector v2 Pro** — a fast, lightweight, in-browser vector graphics editor designed for creatives, developers, and professionals.
 
-Doppleit Vector v2 Pro is a powerful, in-browser vector graphics editor designed for creators who demand precision and flexibility. Built with modern web technologies, it offers a vibrant, accessible interface for drawing, editing, and exporting vector graphics—all without server-side processing for maximum privacy.
+## 🚀 Live Demo
+🔗 [Try it now](https://681395ff5a196908c592a710--doppleit-vector.netlify.app/)
 
 ---
 
 ## ✨ Features
 
-- **Vector Drawing Tools:** Pen, rectangles, circles, and text
-- **Advanced Color Management:** HSL, HEX, RGB, color wheel, sliders, eyedropper
-- **Layer System:** Rename, reorder, toggle visibility/lock
-- **Undo/Redo:** Full edit history (50 actions)
-- **Export Options:** SVG, PNG, and JSON project save/load
-- **Accessibility:** ARIA, high contrast, reduced motion, keyboard shortcuts
-- **Performance:** Debounced redraws, real-time canvas previews
-- **Responsive:** Mobile, touch, desktop — full support
-- **Privacy-First:** All rendering stays in-browser
+- **Pen, Rectangle, Circle, Text, Select, Eyedropper** tools
+- **Layer system** (add, rename, toggle visibility, lock)
+- **Advanced color system** (HSL/RGB/HEX, native picker, color wheel)
+- **Undo/Redo** with deep state memory
+- **Snap to Grid** and optional Grid Overlay
+- **Export** as SVG or PNG
+- **Import images** (JPG, PNG, SVG)
+- **Project save/load** as `.json`
+- **High Contrast + Theme Toggle**
+- **Accessible UI** with ARIA labels and keyboard shortcuts
 
 ---
 
-## 🚀 Installation
+## 🧠 Instructions
 
-**No installation needed.** Just open `index.html` in your browser.
+### 🖊 Drawing
+- Select a tool from the top toolbar
+- Draw directly on the canvas
+- Use **1-4 keys** to switch tools (`1` = Pen, `2` = Rect, `3` = Circle, `4` = Text)
 
-Or clone the repo:
-```bash
-git clone https://github.com/your-repo/doppleit-vector.git
-cd doppleit-vector
-python -m http.server
-```
+### 🧷 Layers
+- Use the **Layers section** to manage visibility, lock, and current drawing layer
+- Double-click a layer to rename it
 
-Navigate to [http://localhost:8000](http://localhost:8000)
+### 🎨 Color
+- Use the **color wheel**, HEX/RGB/HSL inputs, or the system picker
+- Adjust **lightness, opacity**, and **stroke width**
+- Add swatches to remember favorite colors
 
----
+### 💾 Saving
+- Save your project via `Save Project` (JSON file)
+- Load it later using `Load Project`
 
-## 🧰 Usage
+### 🖼 Image Upload
+- Drag and drop or use the `Browse Files` button
+- Supports `.jpg`, `.png`, `.svg` under 5MB
 
-- **Start Drawing:** Pen (1), Rectangle (2), Circle (3), Text (4)
-- **Color Tools:** Use sliders, wheel, swatches, eyedropper
-- **Layers:** Add, rename (double-click), reorder
-- **Export:** Download as SVG, PNG, or JSON
-- **Keyboard Shortcuts:**
-  - `1-4` → Tool switch
-  - `S` → Select Tool
-  - `Esc` → Cancel / Deselect
-  - `Ctrl+Z / Ctrl+Y` → Undo / Redo
+### 📤 Export
+- Click `Export as SVG` or `Export as PNG`
+- Customize file name in the input box
 
----
-
-## 🛡 Security
-
-- ✅ Strict Content Security Policy
-- ✅ Nonce-based style/script validation
-- ✅ No data sent to server (fully offline)
-- ✅ DOMPurify sanitation on any SVG content
+### 🧰 Settings
+- Toggle **theme** (dark/light)
+- Enable **high contrast** for visibility
+- Reset session to clear all layers, colors, and memory
 
 ---
 
-## 🧑‍💻 Developer Notes
+## 🧠 Keyboard Shortcuts
 
-- Everything lives in `index.html`
-- Written in Vanilla JS, CSS3, and HTML5
-- Uses Canvas and SVG only — no WebGL or WebAssembly
-
----
-
-## 📃 License
-
-MIT © 2025 Doppleit
-
----
-
-## 🗣 Contact
-
-Have ideas or feedback?  
-Open an issue or hit us at [doppleit.io/feedback](https://doppleit.io/feedback)
+| Action             | Shortcut     |
+|--------------------|--------------|
+| Undo               | Ctrl + Z     |
+| Redo               | Ctrl + Y     |
+| Pen Tool           | 1            |
+| Rect Tool          | 2            |
+| Circle Tool        | 3            |
+| Text Tool          | 4            |
+| Select Tool        | S            |
+| Delete Selected    | Delete key   |
+| Deselect           | Escape       |
 
 ---
 
-**Doppleit Vector v2 Pro** — Where creativity meets control.
+## 📁 Local Development
+
+This project is a single HTML file:
+- **No frameworks or external JS libraries**
+- Designed to be portable, hackable, and instantly deployable
+
+To run locally:
+1. Clone or download the project
+2. Open `index.html` in your browser
+
+---
+
+## 💡 Credits
+
+Created by **Carl**  
+Built under the **Doppleit** brand  
+“Software that reflects your creativity.”
+
+---
+
+## 🛠 License
+
+MIT License. Use freely. Attribute if you share.
