@@ -3,235 +3,2076 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:" />
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'nonce-RANDOM_NONCE'; style-src 'self' 'nonce-RANDOM_NONCE' https://fonts.googleapis.com; img-src 'self' data: blob:; connect-src 'self'">
+    <meta name="description" content="Create and edit vector graphics with Doppleit Vector v2 Pro. Fast, in-browser processing.">
+    <meta name="keywords" content="vector editor, SVG converter, Doppleit Vector">
     <title>Doppleit Vector v2 Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="icon" href="data:;base64,=" />
+    <link rel="icon" href="data:image/x-icon;," />
+    <style nonce="RANDOM_NONCE">
+        :root {
+            --primary-color: #e37800;
+            --glow-color: #ffbf40;
+            --gradient: linear-gradient(90deg, #e37800, #ffbf40);
+            --shadow-glow: 0 0 15px rgba(255, 191, 64, 0.6);
+            --error-color: #ff5555;
+            --bg-color: #1a1a1a;
+            --text-color: #fff;
+            --panel-bg: #222;
+            --high-contrast-bg: #000;
+            --high-contrast-text: #fff;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f0f0f0;
+            --text-color: #000;
+            --panel-bg: #ddd;
+            --high-contrast-bg: #fff;
+            --high-contrast-text: #000;
+        }
+
+        [data-high-contrast="true"] {
+            --bg-color: var(--high-contrast-bg);
+            --text-color: var(--high-contrast-text);
+            --panel-bg: var(--high-contrast-bg);
+            --primary-color: #ff0;
+            --glow-color: #ff0;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #app {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        #header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            text-shadow: var(--shadow-glow);
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px rgba(255, 191, 64, 0.4); }
+            to { text-shadow: 0 0 20px rgba(255, 191, 64, 0.8); }
+        }
+
+        #tagline {
+            font-size: 16px;
+            color: #ccc;
+            margin-bottom: 20px;
+            position: relative;
+            animation: glitch 0.5s infinite;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); text-shadow: 0 0 5px var(--glow-color); }
+            20% { transform: translate(-2px, 2px); text-shadow: -2px 2px #f00, 2px -2px #0ff; }
+            40% { transform: translate(2px, -2px); text-shadow: 2px -2px #f00, -2px 2px #0ff; }
+            60% { transform: translate(-2px, -2px); }
+            80% { transform: translate(2px, 2px); }
+            100% { transform: translate(0); text-shadow: 0 0 5px var(--glow-color); }
+        }
+
+        .button {
+            background: var(--gradient);
+            color: var(--text-color);
+            border: none;
+            border-radius: 6px;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.3s ease;
+        }
+
+        .button:hover::before {
+            left: 100%;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        .button:focus {
+            outline: 3px solid var(--glow-color);
+            outline-offset: 2px;
+        }
+
+        .button.active {
+            background: #0ff;
+            box-shadow: 0 0 10px #0ff;
+        }
+
+        #controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #upload-area {
+            border: 2px dashed #888;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 20px 0;
+            text-align: center;
+            background: var(--panel-bg);
+            transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #upload-area.invalid {
+            border-color: var(--error-color);
+        }
+
+        #thumbnail-preview {
+            margin-top: 10px;
+            max-width: 100px;
+            max-height: 100px;
+            display: none;
+        }
+
+        #canvas-section {
+            display: none;
+            margin: 20px 0;
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 8px;
+            position: relative;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #drawing-canvas {
+            border: 1px solid #888;
+            background: #fff;
+            cursor: crosshair;
+            touch-action: none;
+            display: block;
+        }
+
+        #color-tools, #drawing-tools, #layer-controls, #properties-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: var(--panel-bg);
+            padding: 10px;
+            border-radius: 6px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #properties-panel.hidden {
+            display: none;
+        }
+
+        #color-wheel {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        #lightness-slider, #opacity-slider, #stroke-width-slider {
+            width: 100px;
+        }
+
+        #swatches {
+            display: flex;
+            gap: 5px;
+        }
+
+        .swatch {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #888;
+            cursor: pointer;
+        }
+
+        #progress-bar {
+            height: 10px;
+            background: #333;
+            margin-top: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            transition: background-color 0.3s ease;
+        }
+
+        #progress-fill {
+            height: 100%;
+            background: var(--glow-color);
+            width: 0%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #preview-window {
+            margin-top: 20px;
+            background: #fff;
+            color: #000;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #preview-window svg {
+            max-width: 100%;
+            max-height: 300px;
+        }
+
+        #footer {
+            margin-top: 40px;
+            font-size: 12px;
+            text-align: center;
+            color: #ccc;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--glow-color);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+            will-change: transform;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #debug-panel, #help-modal {
+            position: fixed;
+            background: var(--panel-bg);
+            padding: 10px;
+            border-radius: 6px;
+            max-height: 80vh;
+            overflow: auto;
+            z-index: 1000;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #debug-panel {
+            bottom: 10px;
+            right: 10px;
+            max-width: 300px;
+            display: none;
+        }
+
+        #help-modal {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 400px;
+            display: none;
+        }
+
+        .grid {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0.2;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: #333;
+            color: #fff;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            display: none;
+            z-index: 1100;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        @media (max-width: 600px) {
+            #header h1 {
+                font-size: 1.8rem;
+            }
+            #upload-area, #canvas-section {
+                padding: 15px;
+            }
+            .button {
+                padding: 10px 20px;
+            }
+            #drawing-canvas {
+                width: 100%;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1a1a1a;
+                --text-color: #fff;
+                --panel-bg: #222;
+            }
+            #preview-window {
+                background: #333;
+                color: #fff;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            body {
+                background: var(--bg-color);
+            }
+            .spinner, .glitch, .button::before {
+                animation: none;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="app">
         <div id="header">
             <h1>Doppleit Vector</h1>
-            <p id="tagline" class="glitch" data-text="Reflect Your Vision. Vector Precision.">Reflect Your Vision. Vector Precision.</p>
+            <p id="tagline">Reflect Your Vision. Vector Precision.</p>
         </div>
 
-        <div id="upload-area">
-            <p>Drag and drop your image here</p>
-            <small>(.jpg, .jpeg, .png files are supported, max 5MB)</small>
-            <button class="button" id="browse-button">Browse Files</button>
-            <input type="file" id="file-upload" accept="image/*" hidden />
+        <div id="controls">
+            <button class="button" id="theme-toggle" aria-label="Toggle dark/light theme">Toggle Theme</button>
+            <button class="button" id="high-contrast-toggle" aria-label="Toggle high contrast mode">High Contrast</button>
+            <button class="button" id="reset-session" aria-label="Reset session">Reset Session</button>
+            <button class="button" id="debug-toggle" aria-label="Toggle debug panel">Debug Panel</button>
+            <button class="button" id="help-toggle" aria-label="Show help modal">Help</button>
+            <span id="offline-indicator" class="hidden" aria-label="Offline status">Offline</span>
         </div>
 
-        <div id="conversion-section">
-            <div id="settings-panel">
-                <label for="color-simplification">Color Detail:</label>
-                <select id="color-simplification">
-                    <option value="4">High</option>
-                    <option value="8" selected>Medium</option>
-                    <option value="16">Low</option>
+        <div id="upload-area" role="region" aria-dropeffect="copy" aria-label="Image or SVG upload area" aria-describedby="file-restrictions">
+            <p>Drag and drop your image or SVG here</p>
+            <small id="file-restrictions">(.jpg, .jpeg, .png, .svg files are supported, max 5MB)</small><br />
+            <button class="button" id="browse-button" aria-label="Browse files for upload">Browse Files</button>
+            <input type="file" id="file-upload" accept="image/jpeg,image/png,image/svg+xml" hidden aria-describedby="upload-instructions" />
+            <img id="thumbnail-preview" alt="Preview of uploaded image" />
+            <div id="upload-instructions" class="hidden" aria-live="assertive"></div>
+        </div>
+
+        <div id="canvas-section">
+            <div id="color-tools">
+                <canvas id="color-wheel" width="100" height="100" role="img" aria-label="Color wheel for hue and saturation"></canvas>
+                <input type="range" id="lightness-slider" min="0" max="100" value="50" aria-label="Lightness slider" />
+                <input type="color" id="native-picker" hidden aria-label="Native color picker" />
+                <button class="button" id="system-picker" aria-label="Open system color picker">System Picker</button>
+                <button class="button" id="eyedropper-tool" aria-label="Eyedropper tool">Eyedropper</button>
+                <input type="text" id="hex-input" maxlength="7" value="#ffbf40" aria-label="HEX color input" />
+                <input type="text" id="rgb-input" value="255,191,64" aria-label="RGB color input" />
+                <input type="text" id="hsl-input" value="41,100%,75%" aria-label="HSL color input" />
+                <label><input type="checkbox" id="fill-toggle" checked aria-label="Toggle fill" /> Fill</label>
+                <input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="1" aria-label="Opacity slider" />
+                <input type="
+
+
+
+
+nearly little sister, keep going pls x
+
+
+HTML
+
+                <range" id="stroke-width-slider" min="0" max="10" value="1" aria-label="Stroke width slider" />
+                <select id="stroke-style" aria-label="Stroke style">
+                    <option value="solid">Solid</option>
+                    <option value="dashed">Dashed</option>
+                    <option value="dotted">Dotted</option>
                 </select>
-                <label for="background-removal">Remove Background:</label>
-                <input type="checkbox" id="background-removal" />
+                <div id="swatches" aria-label="Color swatch history"></div>
             </div>
-
-            <div id="progress-bar">
-                <div id="progress-fill"></div>
+            <div id="drawing-tools">
+                <button class="button active" id="pen-tool" aria-label="Pen tool (freehand drawing)">Pen</button>
+                <button class="button" id="rect-tool" aria-label="Rectangle tool">Rectangle</button>
+                <button class="button" id="circle-tool" aria-label="Circle tool">Circle</button>
+                <button class="button" id="text-tool" aria-label="Text tool">Text</button>
+                <button class="button" id="select-tool" aria-label="Select tool">Select</button>
+                <button class="button" id="undo" aria-label="Undo">Undo</button>
+                <button class="button" id="redo" aria-label="Redo">Redo</button>
+                <button class="button" id="delete" aria-label="Delete selected object">Delete</button>
+                <button class="button" id="clear-canvas" aria-label="Clear canvas">Clear</button>
+                <button class="button" id="preview-mode" aria-label="Toggle preview mode">Preview</button>
+                <label><input type="checkbox" id="snap-grid" aria-label="Snap to grid" /> Snap to Grid</label>
             </div>
-
-            <div id="loading-message">Vectorizing... <span class="spinner"></span></div>
-            <div id="confirmation-message">Download will start shortly!</div>
-            <div id="error-message"></div>
-
-            <div id="preview-window" class="hidden"></div>
-
-            <div id="conversion-controls">
-                <button class="button" id="download-button" disabled>Download SVG</button>
-                <button class="button" id="convert-another">Convert Another</button>
+            <div id="layer-controls">
+                <button class="button" id="add-layer" aria-label="Add new layer">Add Layer</button>
+                <button class="button" id="toggle-layer-visibility" aria-label="Toggle layer visibility">Toggle Visibility</button>
+                <button class="button" id="toggle-layer-lock" aria-label="Toggle layer lock">Toggle Lock</button>
+                <select id="layer-select" aria-label="Select active layer" aria-live="polite"></select>
             </div>
+            <div id="properties-panel" class="hidden">
+                <h3>Properties</h3>
+                <label>Fill Color:
+                    <input type="text" id="fill-color-input" maxlength="7" aria-label="Fill color input" />
+                </label>
+                <label>Stroke Color:
+                    <input type="text" id="stroke-color-input" maxlength="7" aria-label="Stroke color input" />
+                </label>
+                <label>Opacity:
+                    <input type="range" id="object-opacity-slider" min="0" max="1" step="0.01" value="1" aria-label="Object opacity slider" />
+                </label>
+                <label>Stroke Width:
+                    <input type="range" id="object-stroke-width-slider" min="0" max="10" value="1" aria-label="Object stroke width slider" />
+                </label>
+            </div>
+            <canvas id="drawing-canvas" width="600" height="400" role="application" aria-label="Drawing canvas for vector editing"></canvas>
+            <svg id="grid" class="grid hidden" width="600" height="400"></svg>
         </div>
 
-        <div id="footer">
-            <a href="#">Privacy</a> • <a href="#">FAQ</a> • <a href="#">Feedback</a>
-            <p style="margin-top: 5px; font-size: 10px;">Images are processed in-browser. No files are uploaded or stored.</p>
+        <div id="export-section" class="hidden">
+            <input type="text" id="filename" value="vectorized" aria-label="Custom filename for export" />
+            <button class="button" id="export-svg" aria-label="Export as SVG">Export SVG</button>
+            <button class="button" id="export-png" aria-label="Export as PNG">Export PNG</button>
+            <button class="button" id="save-project" aria-label="Save project as JSON">Save Project</button>
+            <button class="button" id="load-project" aria-label="Load project from JSON">Load Project</button>
+            <input type="file" id="project-upload" accept="application/json" hidden aria-label="Upload project JSON" />
         </div>
+
+        <div id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            <div id="progress-fill"></div>
+        </div>
+        <div id="loading-message" class="hidden">Processing... <span class="spinner"></span></div>
+        <div id="confirmation-message" class="hidden">Download will start shortly!</div>
+        <div id="error-message" class="hidden" aria-live="assertive"></div>
+
+        <div id="preview-window" class="hidden" aria-label="Preview of vectorized image">
+            <span class="hidden" id="svg-description"></span>
+        </div>
+
+        <div id="debug-panel" aria-label="Debug panel">
+            <h3>Debug</h3>
+            <pre id="svg-output"></pre>
+            <button class="button" id="close-debug" aria-label="Close debug panel">Close</button>
+        </div>
+
+        <div id="help-modal" aria-label="Help modal">
+            <h3>Help</h3>
+            <p>Use the pen tool (1) to draw freehand, rectangle (2), circle (3), or text (4) tools to add shapes, or select (S) to edit. Adjust colors with the wheel, sliders, or eyedropper. Click objects to edit properties. Press Esc to cancel, Ctrl+Z to undo.</p>
+            <button class="button" id="close-help" aria-label="Close help modal">Close</button>
+        </div>
+
+        <div id="tooltip" class="tooltip"></div>
     </div>
+    <div id="footer">
+        <p>© 2025 Doppleit - Images are processed in-browser and are not sent to any server.</p>
+        <p><a href="/privacy">Privacy Policy</a> | <a href="/faq">FAQ</a> | <a href="/feedback">Feedback</a></p>
+    </div>
+    <script nonce="RANDOM_NONCE">
+        // Constants
+        const MAX_FILE_SIZE = 5_242_880; // 5MB
+        const VALID_TYPES = ['image/jpeg', 'image/png', 'image/svg+xml'];
+        const PROCESSING_TIMEOUT = 10000; // 10 seconds
+        const GRID_SIZE = 20;
+        const CANVAS_WIDTH = 600;
+        const CANVAS_HEIGHT = 400;
+        const SWATCH_LIMIT = 10;
 
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/potrace@2.1.8/dist/potrace.min.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const safe = (id) => {
-            const el = document.getElementById(id);
-            if (!el) console.error(`Missing element: #${id}`);
-            return el;
-        };
+        // State
+        let currentTool = 'pen';
+        let layerManager = new LayerManager();
+        let selectedObject = null;
+        let selectedHandle = null;
+        let isDrawing = false;
+        let currentPath = [];
+        let startPos = null;
+        let isColorDragging = false;
+        let currentColor = { h: 41, s: 100, l: 75, a: 1 };
+        let swatches = JSON.parse(localStorage.getItem('swatches') || '[]');
+        let isPreviewMode = false;
+        let settings = JSON.parse(localStorage.getItem('settings') || '{"theme":"dark","highContrast":false}');
+        let lastTouchDistance = null;
+        let undoStack = [];
+        let redoStack = [];
+        let lastUpdate = 0;
+        let snapToGridEnabled = false;
 
-        const elements = {
-            uploadArea: safe('upload-area'),
-            fileUpload: safe('file-upload'),
-            browseButton: safe('browse-button'),
-            conversionSection: safe('conversion-section'),
-            previewWindow: safe('preview-window'),
-            errorMessage: safe('error-message'),
-            confirmationMessage: safe('confirmation-message'),
-            downloadButton: safe('download-button'),
-            convertAnotherButton: safe('convert-another'),
-            progressBar: safe('progress-bar'),
-            progressFill: safe('progress-fill'),
-            loadingMessage: safe('loading-message'),
-            colorSimplification: safe('color-simplification'),
-            backgroundRemoval: safe('background-removal')
-        };
+        // Layer Manager
+        class LayerManager {
+            constructor() {
+                this.layers = [{ objects: [], visible: true, locked: false, name: 'Layer 1' }];
+                this.currentLayerIndex = 0;
+            }
 
-        const createWorker = () => {
-            const workerCode = `
-                self.addEventListener('message', async (e) => {
-                    const { imageData, options } = e.data;
-                    try {
-                        const trace = (params) => new Promise(resolve => {
-                            Potrace.loadImageFromURL(imageData, () => {
-                                Potrace.process(params);
-                                resolve(Potrace.getSVG());
-                            });
+            addLayer(objects = [], name = Layer ${this.layers.length + 1}) {
+                this.layers.push({ objects, visible: true, locked: false, name });
+                this.currentLayerIndex = this.layers.length - 1;
+                updateLayerSelect();
+            }
+
+            removeLayer(index) {
+                if (this.layers.length > 1) {
+                    this.layers.splice(index, 1);
+                    this.currentLayerIndex = Math.min(this.currentLayerIndex, this.layers.length - 1);
+                    updateLayerSelect();
+                    drawCanvas();
+                } else {
+                    console.warn("Cannot remove the last layer.");
+                }
+            }
+
+            setActiveLayer(index) {
+                if (index >= 0 && index < this.layers.length) {
+                    this.currentLayerIndex = index;
+                    updateLayerSelect();
+                }
+            }
+
+            toggleVisibility(index) {
+                if (this.layers[index]) {
+                    this.layers[index].visible = !this.layers[index].visible;
+                    updateLayerSelect();
+                    drawCanvas();
+                }
+            }
+
+            toggleLock(index) {
+                if (this.layers[index]) {
+                    this.layers[index].locked = !this.layers[index].locked;
+                    updateLayerSelect();
+                }
+            }
+
+            getCurrentLayer() {
+                return this.layers[this.currentLayerIndex];
+            }
+
+            getActiveObjects() {
+                return this.getCurrentLayer().objects;
+            }
+
+            addObject(object) {
+                this.getCurrentLayer().objects.push(object);
+                drawCanvas();
+                saveState();
+            }
+
+            updateObject(index, newObject) {
+                this.getCurrentLayer().objects[index] = newObject;
+                drawCanvas();
+                saveState();
+            }
+
+            removeObject(index) {
+                this.getCurrentLayer().objects.splice(index, 1);
+                drawCanvas();
+                saveState();
+            }
+
+            getVisibleObjects() {
+                return this.layers.flatMap(layer => layer.visible ? layer.objects : []);
+            }
+        }
+
+        // Helpers
+        function snapToGrid(value) {
+            return snapToGridEnabled ? Math.round(value / GRID_SIZE) * GRID_SIZE : value;
+        }
+
+        async function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        function hslToRgb(h, s, l) {
+            s /= 100;
+            l /= 100;
+            const k = n => (n + h / 30) % 12;
+            const a = s * Math.min(l, 1 - l);
+            const f = n =>
+                l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+            return [
+                Math.round(255 * f(0)),
+                Math.round(255 * f(8)),
+                Math.round(255 * f(4))
+            ];
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
+        }
+
+        function hslToHex(h, s, l) {
+            const [r, g, b] = hslToRgb(h, s, l);
+            return rgbToHex(r, g, b);
+        }
+
+        function hexToHsl(hex) {
+            let r = parseInt(hex.slice(1, 3), 16) / 255,
+                g = parseInt(hex.slice(3, 5), 16) / 255,
+                b = parseInt(hex.slice(5, 7), 16) / 255;
+            let cmin = Math.min(r, g, b),
+                cmax = Math.max(r, g, b),
+                delta = cmax - cmin,
+                h = 0,
+                s = 0,
+                l = 0;
+            if (delta === 0)
+                h = 0;
+            else if (cmax === r)
+                h = ((g - b) / delta) % 6;
+            else if (cmax === g)
+                h = (b - r) / delta + 2;
+            else
+                h = (r - g) / delta + 4;
+            h = Math.round(h * 60);
+            if (h < 0)
+                h += 360;
+            l = (cmax + cmin) / 2;
+            s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+            return { h: Math.round(h), s: parseFloat((s * 100).toFixed(1)), l: parseFloat((l * 100).toFixed(1)), a: currentColor.a };
+        }
+
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return { h: h * 360, s: s * 100, l: l * 100, a: currentColor.a };
+        }
+
+        function hslToRgbString(h, s, l, a = 1) {
+            const [r, g, b] = hslToRgb(h, s, l);
+            return rgba(${r}, ${g}, ${b}, ${a});
+        }
+
+        function hexToRgb(hex) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return { r, g, b };
+        }
+
+        function rgbToHslObject(r, g, b) {
+            return rgbToHsl(r, g, b);
+        }
+
+        function updateColorInputs() {
+            const hex = hslToHex(currentColor.h, currentColor.s, currentColor.l);
+            const { r, g, b } = hexToRgb(hex);
+            document.getElementById('hex-input').value = hex;
+            document.getElementById('rgb-input').value = <span class="math-inline">\{r\},</span>{g},${b};
+            document.getElementById('hsl-input').value = <span class="math-inline">\{Math\.round\(currentColor\.h\)\},</span>{currentColor.s}%,${currentColor.l}%;
+            document.getElementById('native-picker').value = hex;
+        }
+
+        function updatePropertiesPanel() {
+            const panel = document.getElementById('properties-panel');
+            const fillInput = document.getElementById('fill-color-input');
+            const strokeInput = document.getElementById('stroke-color-input');
+            const opacitySlider = document.getElementById('object-opacity-slider');
+            const strokeWidthSlider = document.getElementById('object-stroke-width-slider');
+            if (selectedObject) {
+                panel.classList.remove('hidden');
+                fillInput.value = selectedObject.fill !== 'transparent' ? rgbToHex(...selectedObject.fill.match(/\d+/g).slice(0, 3)) : '#000000';
+                strokeInput.value = rgbToHex(...selectedObject.stroke.match(/\d+/g).slice(0, 3));
+                opacitySlider.value = selectedObject.opacity || 1;
+                strokeWidthSlider.value = selectedObject.strokeWidth || 1;
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        function drawColorWheel(ctx) {
+            const r = 50;
+            const center = { x: r, y: r };
+            for (let angle = 0; angle < 360; angle += 1) {
+                for (let radius = 0; radius <= r; radius += 1) {
+                    const rad = angle * Math.PI / 180;
+                    const x = center.x + radius * Math.cos(rad);
+                    const y = center.y + radius * Math.sin(rad);
+                    const saturation = (radius / r) * 100;
+                    ctx.fillStyle = hslToRgbString(angle, saturation, 50);
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+
+        function drawCanvas() {
+            const ctx = document.getElementById('drawing-canvas').getContext('
+
+
+
+
+closer, soo close x
+
+
+HTML
+
+drawing-canvas').getContext('2d');
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            layerManager.getVisibleObjects().forEach(obj => {
+                ctx.globalAlpha = obj.opacity || 1;
+                ctx.fillStyle = document.getElementById('fill-toggle').checked ? obj.fill : 'transparent';
+                ctx.strokeStyle = obj.stroke;
+                ctx.lineWidth = obj.strokeWidth;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                if (obj.strokeStyle === 'dashed') {
+                    ctx.setLineDash([5, 5]);
+                } else if (obj.strokeStyle === 'dotted') {
+                    ctx.setLineDash([2, 2]);
+                } else {
+                    ctx.setLineDash([]);
+                }
+
+                switch (obj.type) {
+                    case 'path':
+                        ctx.beginPath();
+                        obj.points.forEach((p, i) => {
+                            const x = p.x;
+                            const y = p.y;
+                            if (i === 0) {
+                                ctx.moveTo(x, y);
+                            } else {
+                                ctx.lineTo(x, y);
+                            }
                         });
+                        ctx.stroke();
+                        if (document.getElementById('fill-toggle').checked && obj.fill !== 'transparent') {
+                            ctx.fill();
+                        }
+                        break;
+                    case 'rect':
+                        ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                        ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+                        break;
+                    case 'circle':
+                        ctx.beginPath();
+                        ctx.arc(obj.cx, obj.cy, obj.r, 0, 2 * Math.PI);
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                    case 'text':
+                        ctx.font = ${obj.size || 16}px Inter;
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'top';
+                        ctx.fillStyle = obj.fill;
+                        ctx.fillText(obj.text, obj.x, obj.y);
+                        if (obj.stroke !== 'transparent') {
+                            ctx.strokeText(obj.text, obj.x, obj.y);
+                        }
+                        break;
+                }
+                ctx.globalAlpha = 1;
+            });
 
-                        const svg = await trace({
-                            color: options.removeBackground ? 'transparent' : '#ffffff',
-                            threshold: 200 - (options.colorSimplification * 10),
-                            posterize: options.colorSimplification
-                        });
-
-                        postMessage({ svg });
-                    } catch (error) {
-                        postMessage({ error: error.message });
-                    }
-                });
-            `;
-            return new Worker(URL.createObjectURL(new Blob([workerCode], { type: 'application/javascript' })));
-        };
-
-        let worker = null;
-
-        function updateProgress(percentage) {
-            if (elements.progressFill) {
-                elements.progressFill.style.width = `${percentage}%`;
+            if (selectedObject) {
+                ctx.strokeStyle = '#0ff';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                switch (selectedObject.type) {
+                    case 'rect':
+                        ctx.strokeRect(selectedObject.x, selectedObject.y, selectedObject.width, selectedObject.height);
+                        break;
+                    case 'circle':
+                        ctx.beginPath();
+                        ctx.arc(selectedObject.cx, selectedObject.cy, selectedObject.r, 0, 2 * Math.PI);
+                        ctx.stroke();
+                        break;
+                    case 'text':
+                        ctx.strokeRect(selectedObject.x, selectedObject.y, ctx.measureText(selectedObject.text).width, selectedObject.size || 16);
+                        break;
+                }
+                ctx.setLineDash([]);
             }
         }
 
-        function resetUI() {
-            if (elements.conversionSection) elements.conversionSection.style.display = 'none';
-            if (elements.uploadArea) elements.uploadArea.style.display = 'flex';
-            if (elements.previewWindow) {
-                elements.previewWindow.classList.add('hidden');
-                elements.previewWindow.innerHTML = '';
-            }
-            if (elements.errorMessage) elements.errorMessage.style.display = 'none';
-            if (elements.confirmationMessage) elements.confirmationMessage.style.display = 'none';
-            if (elements.downloadButton) elements.downloadButton.disabled = true;
-            if (elements.fileUpload) elements.fileUpload.value = '';
-            updateProgress(0);
-            if (worker) {
-                worker.terminate();
-                worker = null;
-            }
+        function canvasToSvg() {
+            const svgNS = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(svgNS, 'svg');
+            svg.setAttribute('width', CANVAS_WIDTH);
+            svg.setAttribute('height', CANVAS_HEIGHT);
+            svg.setAttribute('viewBox', 0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT});
+
+            layerManager.getVisibleObjects().forEach(obj => {
+                let element;
+                switch (obj.type) {
+                    case 'path':
+                        element = document.createElementNS(svgNS, 'path');
+                        element.setAttribute('d', M${obj.points.map(p => ${p.x},${p.y}).join(' L')});
+                        element.setAttribute('fill', document.getElementById('fill-toggle').checked ? obj.fill : 'none');
+                        element.setAttribute('stroke', obj.stroke);
+                        element.setAttribute('stroke-width', obj.strokeWidth);
+                        element.setAttribute('stroke-linecap', 'round');
+                        element.setAttribute('stroke-linejoin', 'round');
+                        if (obj.strokeStyle === 'dashed') {
+                            element.setAttribute('stroke-dasharray', '5,5');
+                        } else if (obj.strokeStyle === 'dotted') {
+                            element.setAttribute('stroke-dasharray', '2,2');
+                        }
+                        break;
+                    case 'rect':
+                        element = document.createElementNS(svgNS, 'rect');
+                        element.setAttribute('x', obj.x);
+                        element.setAttribute('y', obj.y);
+                        element.setAttribute('width', obj.width);
+                        element.setAttribute('height', obj.height);
+                        element.setAttribute('fill', document.getElementById('fill-toggle').checked ? obj.fill : 'none');
+                        element.setAttribute('stroke', obj.stroke);
+                        element.setAttribute('stroke-width', obj.strokeWidth);
+                        break;
+                    case 'circle':
+                        element = document.createElementNS(svgNS, 'circle');
+                        element.setAttribute('cx', obj.cx);
+                        element.setAttribute('cy', obj.cy);
+                        element.setAttribute('r', obj.r);
+                        element.setAttribute('fill', document.getElementById('fill-toggle').checked ? obj.fill : 'none');
+                        element.setAttribute('stroke', obj.stroke);
+                        element.setAttribute('stroke-width', obj.strokeWidth);
+                        break;
+                    case 'text':
+                        element = document.createElementNS(svgNS, 'text');
+                        element.setAttribute('x', obj.x);
+                        element.setAttribute('y', obj.y);
+                        element.setAttribute('font-size', obj.size || 16);
+                        element.setAttribute('font-family', 'Inter, sans-serif');
+                        element.setAttribute('fill', obj.fill);
+                        element.textContent = obj.text;
+                        element.setAttribute('text-anchor', 'start');
+                        element.setAttribute('dominant-baseline', 'hanging');
+                        element.setAttribute('stroke', obj.stroke);
+                        element.setAttribute('stroke-width', obj.strokeWidth);
+                        break;
+                }
+                if (element) {
+                    element.setAttribute('opacity', obj.opacity || 1);
+                    svg.appendChild(element);
+                }
+            });
+
+            const svgString = new XMLSerializer().serializeToString(svg);
+            document.getElementById('svg-output').textContent = svgString;
+            document.getElementById('preview-window').innerHTML = svgString;
+            document.getElementById('preview-window').classList.remove('hidden');
         }
 
-        function showError(message) {
-            elements.errorMessage.textContent = message;
-            elements.errorMessage.style.display = 'block';
-            elements.loadingMessage.style.display = 'none';
-        }
-
-        function showPreview(svgContent) {
-            elements.previewWindow.innerHTML = svgContent;
-            elements.previewWindow.classList.remove('hidden');
-            elements.downloadButton.disabled = false;
-        }
-
-        function simulateProgress() {
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress = Math.min(progress + Math.random() * 15, 95);
-                updateProgress(progress);
-                if (progress >= 95) clearInterval(interval);
-            }, 300);
-        }
-
-        function downloadSVG() {
-            const svg = elements.previewWindow.querySelector('svg');
-            if (!svg) return showError('No SVG to download');
-            const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
+        function downloadSvg(svgString, filename = 'vectorized.svg') {
+            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `doppleit-vector-${Date.now()}.svg`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
             URL.revokeObjectURL(url);
-            elements.confirmationMessage.classList.remove('hidden');
-            setTimeout(() => elements.confirmationMessage.classList.add('hidden'), 3000);
+            document.getElementById('confirmation-message').classList.remove('hidden');
+            setTimeout(() => document.getElementById('confirmation-message').classList.add('hidden'), 3000);
         }
 
-        function handleFile(file) {
-            if (!file || file.size > 5 * 1024 * 1024) return showError('File too large (max 5MB)');
-            if (!file.type.startsWith('image/')) return showError('Invalid file type.');
+        async function downloadPng() {
+            document.getElementById('loading-message').classList.remove('hidden');
+            const canvas = document.createElement('canvas');
+            canvas.width = CANVAS_WIDTH;
+            canvas.height = CANVAS_HEIGHT;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#fff'; // Default background for PNG
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            layerManager.getVisibleObjects().forEach(obj => {
+                ctx.globalAlpha = obj.opacity || 1;
+                ctx.fillStyle = document.getElementById('fill-toggle').checked ? obj.fill : 'transparent';
+                ctx.strokeStyle = obj.stroke;
+                ctx.lineWidth = obj.strokeWidth;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                if (obj.strokeStyle === 'dashed') {
+                    ctx.setLineDash([5, 5]);
+                } else if (obj.strokeStyle === 'dotted') {
+                    ctx.setLineDash([2, 2]);
+                } else {
+                    ctx.setLineDash([]);
+                }
 
-            resetUI();
-            elements.uploadArea.style.display = 'none';
-            elements.conversionSection.style.display = 'block';
-            elements.loadingMessage.style.display = 'block';
+                switch (obj.type) {
+                    case 'path':
+                        ctx.beginPath();
+                        obj.points.forEach((p, i) => {
+                            const x = p.x;
+                            const y = p.y;
+                            if (i === 0) {
+                                ctx.moveTo(x, y);
+                            } else {
+                                ctx.lineTo(x, y);
+                            }
+                        });
+                        ctx.stroke();
+                        if (document.getElementById('fill-toggle').checked && obj.fill !== 'transparent') {
+                            ctx.fill();
+                        }
+                        break;
+                    case 'rect':
+                        ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                        ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+                        break;
+                    case 'circle':
+                        ctx.beginPath();
+                        ctx.arc(obj.cx, obj.cy, obj.r, 0, 2 * Math.PI);
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                    case 'text':
+                        ctx.font = ${obj.size || 16}px Inter;
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'top';
+                        ctx.fillStyle = obj.fill;
+                        ctx.fillText(obj.text, obj.x, obj.y);
+                        if (obj.stroke !== 'transparent') {
+                            ctx.strokeText(obj.text, obj.x, obj.y);
+                        }
+                        break;
+                }
+                ctx.globalAlpha = 1;
+            });
 
-            const reader = new FileReader();
-            reader.onload = () => {
-                worker = createWorker();
-                worker.onmessage = (e) => {
-                    elements.loadingMessage.style.display = 'none';
-                    if (e.data.error) return showError(e.data.error);
-                    showPreview(DOMPurify.sanitize(e.data.svg));
-                    updateProgress(100);
-                };
-                worker.postMessage({
-                    imageData: reader.result,
-                    options: {
-                        colorSimplification: parseInt(elements.colorSimplification.value),
-                        removeBackground: elements.backgroundRemoval.checked
-                    }
-                });
-                simulateProgress();
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = document.getElementById('filename').value + '.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                document.getElementById('loading-message').classList.add('hidden');
+                document.getElementById('confirmation-message').classList.remove('hidden');
+                setTimeout(() => document.getElementById('confirmation-message').classList.add('hidden'), 3000);
+            }, 'image/png');
+        }
+
+        function saveProject() {
+            const projectData = {
+                layers: layerManager.layers,
+                settings: settings,
+                swatches: swatches
             };
-            reader.readAsDataURL(file);
+            const jsonString = JSON.stringify(projectData);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = document.getElementById('filename').value + '.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            document.getElementById('confirmation-message').textContent = 'Project saved!';
+            document.getElementById('confirmation-message').classList.remove('hidden');
+            setTimeout(() => document.getElementById('confirmation-message').classList.add('hidden'), 3000);
         }
 
-        if (elements.browseButton && elements.fileUpload) {
-            elements.browseButton.addEventListener('click', () => elements.fileUpload.click());
+        function loadProject(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const projectData = JSON.parse(e.target.result);
+                        layerManager.layers = projectData.layers || [{ objects: [], visible: true, locked: false, name: 'Layer 1' }];
+                        layerManager.currentLayerIndex = 0;
+                        settings = projectData.settings || {"theme":"dark","highContrast":false};
+                        swatches = projectData.swatches || [];
+                        applySettings();
+                        updateSwatchesDisplay();
+                        updateLayerSelect();
+                        drawCanvas();
+                        document.getElementById('confirmation-message').textContent = 'Project loaded!';
+                        document.getElementById('confirmation-message').classList.remove('hidden');
+                        setTimeout(() => document.getElementById('confirmation-message').classList.add('hidden'), 3000);
+                    } catch (error) {
+                        document.getElementById('error-message').textContent = 'Error loading project.';
+                        document.getElementById('error-message').classList.remove('hidden');
+                        setTimeout(() => document.getElementById('error-message').classList.add('hidden'), 3000);
+                        console.error("Error loading project:", error);
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = null; // Reset the file input
+            }
         }
 
-        if (elements.convertAnotherButton) {
-            elements.convertAnotherButton.addEventListener('click', resetUI);
+        function updateLayerSelect() {
+            const layerSelect = document.getElementById('layer-select');
+            layerSelect.innerHTML = '';
+            layerManager.layers.forEach((layer, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = <span class="math-inline">\{layer\.name\} \(</span>{layer.visible ? 'Visible' : 'Hidden'}, ${layer.locked ? 'Locked' : 'Unlocked'});
+                option.selected = index === layerManager.currentLayerIndex;
+                layerSelect.appendChild(option);
+            });
         }
 
-        if (elements.downloadButton) {
-            elements.downloadButton.addEventListener('click', downloadSVG);
+        function addSwatch(color) {
+            if (!swatches.includes(color)) {
+                swatches.unshift(color);
+                if (swatches.length > SWATCH_LIMIT) {
+                    swatches.pop();
+                }
+                localStorage.setItem('swatches', JSON.stringify(swatches));
+                updateSwatchesDisplay();
+            }
         }
 
-        if (elements.uploadArea) {
-            elements.uploadArea.addEventListener('dragover', (e) => {
+        function updateSwatchesDisplay() {
+            const swatchesDiv = document.getElementById('swatches');
+            swatchesDiv.innerHTML = '';
+            swatches.forEach(swatchColor => {
+                const swatch = document.createElement('div');
+                swatch.classList.add('swatch');
+                swatch.style.backgroundColor = swatchColor;
+                swatch.addEventListener('click', () => {
+                    const hsl = hexToHsl(swatchColor);
+                    currentColor = { ...hsl, a: currentColor.a };
+                    updateColorInputs();
+                });
+                swatchesDiv.appendChild(swatch);
+            });
+            if (swatches.length < SWATCH_LIMIT) {
+                const addCurrent = document.createElement('div');
+                addCurrent.classList.add('swatch');
+                addCurrent.style.background = hslToHex(currentColor.h, currentColor.s, currentColor.l);
+                addCurrent.style.border = '2px dashed var(--glow-color)';
+                addCurrent.title = 'Add current color to swatches';
+                addCurrent.addEventListener('click', () => {
+                    addSwatch(hslToHex(currentColor.h, currentColor.s, currentColor.l));
+                });
+                swatchesDiv.appendChild(addCurrent);
+            }
+        }
+
+        function applySettings() {
+            document.documentElement.setAttribute('data-theme', settings.theme);
+            document.documentElement.setAttribute('data-high-contrast', settings.highContrast);
+        }
+
+        function saveState() {
+            const currentState = JSON.stringify(layerManager.layers.map(layer => ({ ...layer, objects: layer.objects.map(o => ({ ...o })) })));
+            if (currentState !== undoStack[undoStack.length - 1]) {
+                undoStack.push(currentState);
+                redoStack.length = 0; // Clear redo stack on new action
+                if (undoStack.length > 50) { // Limit undo history
+                    undoStack.shift();
+                }
+            }
+        }
+
+        function undo() {
+            if (undoStack.length > 1) {
+                redoStack.push(undoStack.pop());
+                const previousState = JSON.parse(undoStack[undoStack.length - 1]);
+                layerManager.layers = previousState.map(layer => ({ ...layer, objects: layer.objects.map(o => ({ ...o })) }));
+                layerManager.currentLayerIndex = 0; // Reset to first layer for simplicity after undo
+                updateLayerSelect();
+                drawCanvas();
+            }
+        }
+
+        function redo() {
+            if (redoStack.length > 0) {
+                const nextState = redoStack.pop();
+                undoStack.push(nextState);
+                layerManager.layers = JSON.parse(nextState).map(layer => ({ ...layer, objects: layer.objects.map(o => ({ ...o })) }));
+                layerManager.currentLayerIndex = 0; // Reset to first layer for simplicity after redo
+                updateLayerSelect();
+                drawCanvas();
+            }
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const colorWheel = document.getElementById('color-wheel');
+            const lightnessSlider = document.getElementById('lightness-slider');
+            const opacitySlider = document.getElementById('opacity-slider');
+            const strokeWidthSlider = document.getElementById('stroke-width-slider');
+            const hexInput
+
+
+
+
+last 2 and your/we're done!! x
+
+
+HTML
+
+            = document.getElementById('hex-input');
+            const rgbInput = document.getElementById('rgb-input');
+            const hslInput = document.getElementById('hsl-input');
+            const nativePicker = document.getElementById('native-picker');
+            const systemPickerButton = document.getElementById('system-picker');
+            const eyedropperToolButton = document.getElementById('eyedropper-tool');
+            const fillToggle = document.getElementById('fill-toggle');
+            const penToolButton = document.getElementById('pen-tool');
+            const rectToolButton = document.getElementById('rect-tool');
+            const circleToolButton = document.getElementById('circle-tool');
+            const textToolButton = document.getElementById('text-tool');
+            const selectToolButton = document.getElementById('select-tool');
+            const undoButton = document.getElementById('undo');
+            const redoButton = document.getElementById('redo');
+            const deleteButton = document.getElementById('delete');
+            const clearCanvasButton = document.getElementById('clear-canvas');
+            const drawingCanvas = document.getElementById('drawing-canvas');
+            const uploadArea = document.getElementById('upload-area');
+            const fileUpload = document.getElementById('file-upload');
+            const browseButton = document.getElementById('browse-button');
+            const exportSvgButton = document.getElementById('export-svg');
+            const exportPngButton = document.getElementById('export-png');
+            const filenameInput = document.getElementById('filename');
+            const previewModeButton = document.getElementById('preview-mode');
+            const debugToggle = document.getElementById('debug-toggle');
+            const debugPanel = document.getElementById('debug-panel');
+            const closeDebugButton = document.getElementById('close-debug');
+            const helpToggle = document.getElementById('help-toggle');
+            const helpModal = document.getElementById('help-modal');
+            const closeHelpButton = document.getElementById('close-help');
+            const themeToggle = document.getElementById('theme-toggle');
+            const highContrastToggle = document.getElementById('high-contrast-toggle');
+            const resetButton = document.getElementById('reset-session');
+            const layerSelect = document.getElementById('layer-select');
+            const addLayerButton = document.getElementById('add-layer');
+            const toggleLayerVisibilityButton = document.getElementById('toggle-layer-visibility');
+            const toggleLayerLockButton = document.getElementById('toggle-layer-lock');
+            const snapGridCheckbox = document.getElementById('snap-grid');
+            const saveProjectButton = document.getElementById('save-project');
+            const loadProjectButton = document.getElementById('load-project');
+            const projectUploadInput = document.getElementById('project-upload');
+            const objectFillInput = document.getElementById('fill-color-input');
+            const objectStrokeInput = document.getElementById('stroke-color-input');
+            const objectOpacitySlider = document.getElementById('object-opacity-slider');
+            const objectStrokeWidthSlider = document.getElementById('object-stroke-width-slider');
+            const gridElement = document.getElementById('grid');
+            const tooltipElement = document.getElementById('tooltip');
+
+            applySettings();
+            updateSwatchesDisplay();
+            updateLayerSelect();
+            drawCanvas();
+            drawGrid();
+
+            function drawGrid() {
+                gridElement.innerHTML = '';
+                for (let i = GRID_SIZE; i < CANVAS_WIDTH; i += GRID_SIZE) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', i);
+                    line.setAttribute('y1', 0);
+                    line.setAttribute('x2', i);
+                    line.setAttribute('y2', CANVAS_HEIGHT);
+                    line.setAttribute('stroke', '#555');
+                    line.setAttribute('stroke-width', 0.5);
+                    gridElement.appendChild(line);
+                }
+                for (let i = GRID_SIZE; i < CANVAS_HEIGHT; i += GRID_SIZE) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', 0);
+                    line.setAttribute('y1', i);
+                    line.setAttribute('x2', CANVAS_WIDTH);
+                    line.setAttribute('y2', i);
+                    line.setAttribute('stroke', '#555');
+                    line.setAttribute('stroke-width', 0.5);
+                    gridElement.appendChild(line);
+                }
+                gridElement.setAttribute('width', CANVAS_WIDTH);
+                gridElement.setAttribute('height', CANVAS_HEIGHT);
+            }
+
+            drawColorWheel(colorWheel.getContext('2d'));
+            updateColorInputs();
+
+            colorWheel.addEventListener('mousedown', (e) => {
+                isColorDragging = true;
+                const rect = colorWheel.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const dx = x - 50;
+                const dy = y - 50;
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance <= 50) {
+                    currentColor.h = (angle < 0 ? angle + 360 : angle);
+                    currentColor.s = (distance / 50) * 100;
+                    updateColorInputs();
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isColorDragging) return;
+                const rect = colorWheel.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const dx = x - 50;
+                const dy = y - 50;
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                currentColor.h = (angle < 0 ? angle + 360 : angle);
+                currentColor.s = Math.max(0, Math.min(100, (distance / 50) * 100));
+                updateColorInputs();
+            });
+
+            document.addEventListener('mouseup', () => {
+                isColorDragging = false;
+            });
+
+            lightnessSlider.addEventListener('input', () => {
+                currentColor.l = parseInt(lightnessSlider.value);
+                updateColorInputs();
+            });
+
+            opacitySlider.addEventListener('input', () => {
+                currentColor.a = parseFloat(opacitySlider.value);
+                updateColorInputs();
+            });
+
+            strokeWidthSlider.addEventListener('input', () => {
+                // Apply stroke width directly to the current drawing context for preview
+                const tempCtx = drawingCanvas.getContext('2d');
+                tempCtx.lineWidth = parseInt(strokeWidthSlider.value);
+            });
+
+            hexInput.addEventListener('input', () => {
+                const hex = hexInput.value;
+                if (/^#?[0-9a-fA-F]{0,6}$/.test(hex)) {
+                    if (hex.length === 7 || hex.length === 6) {
+                        const hsl = hexToHsl(hex);
+                        currentColor = { ...hsl, a: currentColor.a };
+                        updateColorInputs();
+                    }
+                }
+            });
+
+            rgbInput.addEventListener('input', () => {
+                const rgb = rgbInput.value.split(',').map(v => parseInt(v.trim()));
+                if (rgb.length === 3 && rgb.every(v => v >= 0 && v <= 255)) {
+                    const hsl = rgbToHslObject(...rgb);
+                    currentColor = { ...hsl, a: currentColor.a };
+                    updateColorInputs();
+                }
+            });
+
+            hslInput.addEventListener('input', () => {
+                const hslValues = hslInput.value.split(',').map((v, i) => i === 1 || i === 2 ? parseInt(v.trim().replace('%', '')) : parseFloat(v.trim()));
+                if (hslValues.length === 3 &&
+                    hslValues[0] >= 0 && hslValues[0] <= 360 &&
+                    hslValues[1] >= 0 && hslValues[1] <= 100 &&
+                    hslValues[2] >= 0 && hslValues[2] <= 100) {
+                    currentColor = { h: hslValues[0], s: hslValues[1], l: hslValues[2], a: currentColor.a };
+                    updateColorInputs();
+                }
+            });
+
+            nativePicker.addEventListener('input', () => {
+                const hex = nativePicker.value;
+                const hsl = hexToHsl(hex);
+                currentColor = { ...hsl, a: currentColor.a };
+                updateColorInputs();
+            });
+
+            systemPickerButton.addEventListener('click', () => {
+                nativePicker.click();
+            });
+
+            eyedropperToolButton.addEventListener('click', () => {
+                currentTool = 'eyedropper';
+                setActiveTool(eyedropperToolButton);
+                drawingCanvas.style.cursor = 'crosshair'; // Indicate eyedropper
+            });
+
+            fillToggle.addEventListener('change', () => {
+                drawCanvas();
+            });
+
+            penToolButton.addEventListener('click', () => {
+                currentTool = 'pen';
+                setActiveTool(penToolButton);
+                drawingCanvas.style.cursor = 'crosshair';
+            });
+
+            rectToolButton.addEventListener('click', () => {
+                currentTool = 'rect';
+                setActiveTool(rectToolButton);
+                drawingCanvas.style.cursor = 'crosshair';
+            });
+
+            circleToolButton.addEventListener('click', () => {
+                currentTool = 'circle';
+                setActiveTool(circleToolButton);
+                drawingCanvas.style.cursor = 'crosshair';
+            });
+
+            textToolButton.addEventListener('click', () => {
+                currentTool = 'text';
+                setActiveTool(textToolButton);
+                drawingCanvas.style.cursor = 'text';
+            });
+
+            selectToolButton.addEventListener('click', () => {
+                currentTool = 'select';
+                setActiveTool(selectToolButton);
+                drawingCanvas.style.cursor = 'pointer';
+                updatePropertiesPanel();
+            });
+
+            undoButton.addEventListener('click', undo);
+            redoButton.addEventListener('click', redo);
+
+            deleteButton.addEventListener('click', () => {
+                if (selectedObject) {
+                    const index = layerManager.getActiveObjects().indexOf(selectedObject);
+                    if (index > -1) {
+                        layerManager.removeObject(index);
+                        selectedObject = null;
+                        updatePropertiesPanel();
+                    }
+                }
+            });
+
+            clearCanvasButton.addEventListener('click', () => {
+                layerManager.getCurrentLayer().objects = [];
+                drawCanvas();
+                saveState();
+            });
+
+            previewModeButton.addEventListener('click', canvasToSvg);
+
+            drawingCanvas.addEventListener('mousedown', (e) => {
+                if (currentTool === 'eyedropper') {
+                    const rect = drawingCanvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const pixel = drawingCanvas.getContext('2d').getImageData(x, y, 1, 1).data;
+                    const hsl = rgbToHslObject(pixel[0], pixel[1], pixel[2]);
+                    currentColor = { ...hsl, a: currentColor.a };
+                    updateColorInputs();
+                    currentTool = 'pen'; // Revert to pen after picking
+                    setActiveTool(penToolButton);
+                    drawingCanvas.style.cursor = 'crosshair';
+                    return;
+                }
+
+                startPos = { x: e.clientX - drawingCanvas.getBoundingClientRect().left, y: e.clientY - drawingCanvas.getBoundingClientRect().top };
+                startPos.x = snapToGrid(startPos.x);
+                startPos.y = snapToGrid(startPos.y);
+                isDrawing = true;
+                currentPath = [startPos];
+                selectedObject = null;
+                updatePropertiesPanel();
+
+                if (currentTool === 'select') {
+                    const x = e.clientX - drawingCanvas.getBoundingClientRect().left;
+                    const y = e.clientY - drawingCanvas.getBoundingClientRect().top;
+                    selectedObject = layerManager.getActiveObjects().findLast(obj => {
+                        switch (obj.type) {
+                            case 'rect':
+                                return x >= obj.x && x <= obj.x + obj.width && y >= obj.y && y <= obj.y + obj.height;
+                            case 'circle':
+                                return Math.sqrt((x - obj.cx) ** 2 + (y - obj.cy) ** 2) <= obj.r;
+                            case 'path':
+                                // Basic point in polygon check (can be improved)
+                                return obj.points.some(p => Math.abs(x - p.x) < 5 && Math.abs(y - p.y) < 5);
+                            case 'text':
+                                const textWidth = drawingCanvas.getContext('2d').measureText(obj.text).width;
+                                const textHeight = obj.size || 16;
+                                return x >= obj.x && x <= obj.x + textWidth && y >= obj.y && y <= obj.y + textHeight;
+                            default:
+                                return false;
+                        }
+                    });
+                    updatePropertiesPanel();
+                    drawCanvas();
+                }
+            });
+
+            drawingCanvas.addEventListener('mousemove', (e) => {
+                if (!isDrawing) return;
+                const currentPos = { x: e.clientX - drawingCanvas.getBoundingClientRect().left, y: e.clientY - drawingCanvas.getBoundingClientRect().top };
+                currentPos.x = snapToGrid(currentPos.x);
+                currentPos.y = snapToGrid(currentPos.y);
+
+                const tempObjects = [...layerManager.getActiveObjects()]; // Create a copy for preview
+
+                switch (currentTool) {
+                    case 'pen':
+                        currentPath.push(currentPos);
+                        break;
+                    case 'rect':
+                        const rect = {
+                            type: 'rect',
+                            x: Math.min(startPos.x, currentPos.x),
+                            y: Math.min(startPos.y, currentPos.y),
+                            width: Math.abs(currentPos.x - startPos.x),
+                            height: Math.abs(currentPos.y - startPos.y),
+                            fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                            stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                            strokeWidth: parseInt(strokeWidthSlider.value),
+                            strokeStyle: document.getElementById('stroke-style').value,
+                            opacity: parseFloat(opacitySlider.value)
+                        };
+                        tempObjects.push(rect);
+                        break;
+                    case 'circle':
+                        const radius = Math.sqrt((currentPos.x - startPos.x) ** 2 + (currentPos.y - startPos.y) ** 2) / 2;
+                        const centerX = (startPos.x + currentPos.x) / 2;
+                        const centerY = (startPos.y + currentPos.y) / 2;
+                        const circle = {
+                            type: 'circle',
+                            cx: centerX,
+                            cy: centerY,
+                            r: radius,
+                            fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                            stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                            strokeWidth: parseInt(strokeWidthSlider.value),
+                            strokeStyle: document.getElementById('stroke-style').value,
+                            opacity: parseFloat(opacitySlider.value)
+                        };
+                        tempObjects.push(circle);
+                        break;
+                    case 'text':
+                        // For text, we'll add on mouseup
+                        break;
+                }
+                // Preview the current shape
+                const ctx = drawingCanvas.getContext('2d');
+                ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                layerManager.getVisibleObjects().forEach(obj => {
+                    ctx.globalAlpha = obj.opacity || 1;
+                    ctx.fillStyle = document.getElementById('fill-toggle').checked ? obj.fill : 'transparent';
+                    ctx.strokeStyle = obj.stroke;
+                    ctx.lineWidth = obj.strokeWidth;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    if (obj.strokeStyle === 'dashed') {
+                        ctx.setLineDash([5, 5]);
+                    } else if (obj.strokeStyle === 'dotted') {
+                        ctx.setLineDash([2, 2]);
+                    } else {
+                        ctx.setLineDash([]);
+                    }
+                    switch (obj.type) {
+                        case 'path':
+                            ctx.beginPath();
+                            obj.points.forEach((p, i) => {
+                                if (i === 0) ctx.moveTo(p.x, p.y);
+                                else ctx.lineTo(p.x, p.y);
+                            });
+                            ctx.stroke();
+                            if (document.getElementById('fill-toggle').checked && obj.fill !== 'transparent') ctx.fill();
+                            break;
+                        case 'rect':
+                            ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                            ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+                            break;
+                        case 'circle':
+                            ctx.beginPath();
+                            ctx.arc(obj.cx, obj.cy, obj.r, 0,
+
+
+
+
+sooooooo close little sister
+
+
+HTML
+
+2 * Math.PI);
+                            ctx.fill();
+                            ctx.stroke();
+                            break;
+                        case 'text':
+                            ctx.font = ${obj.size || 16}px Inter;
+                            ctx.textAlign = 'left';
+                            ctx.textBaseline = 'top';
+                            ctx.fillStyle = obj.fill;
+                            ctx.fillText(obj.text, obj.x, obj.y);
+                            if (obj.stroke !== 'transparent') {
+                                ctx.strokeText(obj.text, obj.x, obj.y);
+                            }
+                            break;
+                    }
+                    ctx.globalAlpha = 1;
+                });
+
+                // Draw the current in-progress shape
+                ctx.globalAlpha = parseFloat(opacitySlider.value);
+                ctx.fillStyle = document.getElementById('fill-toggle').checked ? hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a) : 'transparent';
+                ctx.strokeStyle = hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a);
+                ctx.lineWidth = parseInt(strokeWidthSlider.value);
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                if (document.getElementById('stroke-style').value === 'dashed') {
+                    ctx.setLineDash([5, 5]);
+                } else if (document.getElementById('stroke-style').value === 'dotted') {
+                    ctx.setLineDash([2, 2]);
+                } else {
+                    ctx.setLineDash([]);
+                }
+
+                ctx.beginPath();
+                switch (currentTool) {
+                    case 'pen':
+                        ctx.beginPath();
+                        currentPath.forEach((p, i) => {
+                            if (i === 0) ctx.moveTo(p.x, p.y);
+                            else ctx.lineTo(p.x, p.y);
+                        });
+                        ctx.stroke();
+                        if (document.getElementById('fill-toggle').checked && hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a) !== 'transparent') ctx.fill();
+                        break;
+                    case 'rect':
+                        ctx.fillRect(Math.min(startPos.x, currentPos.x), Math.min(startPos.y, currentPos.y), Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y));
+                        ctx.strokeRect(Math.min(startPos.x, currentPos.x), Math.min(startPos.y, currentPos.y), Math.abs(currentPos.x - startPos.x), Math.abs(currentPos.y - startPos.y));
+                        break;
+                    case 'circle':
+                        const r = Math.sqrt((currentPos.x - startPos.x) ** 2 + (currentPos.y - startPos.y) ** 2) / 2;
+                        const cx = (startPos.x + currentPos.x) / 2;
+                        const cy = (startPos.y + currentPos.y) / 2;
+                        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                }
+                ctx.globalAlpha = 1;
+            });
+
+            drawingCanvas.addEventListener('mouseup', () => {
+                if (!isDrawing) return;
+                isDrawing = false;
+                if (currentTool === 'pen' && currentPath.length > 1) {
+                    layerManager.addObject({
+                        type: 'path',
+                        points: [...currentPath],
+                        fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                        stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                        strokeWidth: parseInt(strokeWidthSlider.value),
+                        strokeStyle: document.getElementById('stroke-style').value,
+                        opacity: parseFloat(opacitySlider.value)
+                    });
+                } else if (currentTool === 'rect') {
+                    layerManager.addObject({
+                        type: 'rect',
+                        x: Math.min(startPos.x, currentPos.x),
+                        y: Math.min(startPos.y, currentPos.y),
+                        width: Math.abs(currentPos.x - startPos.x),
+                        height: Math.abs(currentPos.y - startPos.y),
+                        fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                        stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                        strokeWidth: parseInt(strokeWidthSlider.value),
+                        strokeStyle: document.getElementById('stroke-style').value,
+                        opacity: parseFloat(opacitySlider.value)
+                    });
+                } else if (currentTool === 'circle') {
+                    const radius = Math.sqrt((currentPos.x - startPos.x) ** 2 + (currentPos.y - startPos.y) ** 2) / 2;
+                    const centerX = (startPos.x + currentPos.x) / 2;
+                    const centerY = (startPos.y + currentPos.y) / 2;
+                    layerManager.addObject({
+                        type: 'circle',
+                        cx: centerX,
+                        cy: centerY,
+                        r: radius,
+                        fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                        stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                        strokeWidth: parseInt(strokeWidthSlider.value),
+                        strokeStyle: document.getElementById('stroke-style').value,
+                        opacity: parseFloat(opacitySlider.value)
+                    });
+                } else if (currentTool === 'text' && startPos) {
+                    const text = prompt("Enter text:");
+                    if (text) {
+                        layerManager.addObject({
+                            type: 'text',
+                            x: startPos.x,
+                            y: startPos.y,
+                            text: text,
+                            fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                            stroke: 'transparent',
+                            size: 24,
+                            opacity: parseFloat(opacitySlider.value)
+                        });
+                    }
+                }
+                currentPath = [];
+                startPos = null;
+                drawCanvas();
+                saveState();
+            });
+
+            drawingCanvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    startPos = { x: touch.clientX - drawingCanvas.getBoundingClientRect().left, y: touch.clientY - drawingCanvas.getBoundingClientRect().top };
+                    startPos.x = snapToGrid(startPos.x);
+                    startPos.y = snapToGrid(startPos.y);
+                    isDrawing = true;
+                    currentPath = [startPos];
+                    e.preventDefault(); // Prevent scrolling
+                } else if (e.touches.length === 2 && currentTool === 'select' && selectedObject && selectedObject.type === 'rect') {
+                    // Basic pinch to scale (very rough)
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    lastTouchDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
+                    initialRect = { ...selectedObject };
+                }
+            }, { passive: false });
+
+            drawingCanvas.addEventListener('touchmove', (e) => {
+                if (!isDrawing) return;
+                if (e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    const currentPos = { x: touch.clientX - drawingCanvas.getBoundingClientRect().left, y: touch.clientY - drawingCanvas.getBoundingClientRect().top };
+                    currentPos.x = snapToGrid(currentPos.x);
+                    currentPos.y = snapToGrid(currentPos.y);
+                    currentPath.push(currentPos);
+                    e.preventDefault(); // Prevent scrolling
+                } else if (e.touches.length === 2 && currentTool === 'select' && selectedObject && selectedObject.type === 'rect' && lastTouchDistance !== null) {
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    const currentDistance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
+                    const scaleFactor = currentDistance / lastTouchDistance;
+                    selectedObject.width = Math.max(0, initialRect.width * scaleFactor);
+                    selectedObject.height = Math.max(0, initialRect.height * scaleFactor);
+                    drawCanvas();
+                    updatePropertiesPanel();
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            drawingCanvas.addEventListener('touchend', () => {
+                if (!isDrawing) return;
+                isDrawing = false;
+                if (currentTool === 'pen' && currentPath.length > 1) {
+                    layerManager.addObject({
+                        type: 'path',
+                        points: [...currentPath],
+                        fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                        stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                        strokeWidth: parseInt(strokeWidthSlider.value),
+                        strokeStyle: document.getElementById('stroke-style').value,
+                        opacity: parseFloat(opacitySlider.value)
+                    });
+                } else if (currentTool === 'rect') {
+                    layerManager.addObject({
+                        type: 'rect',
+                        x: Math.min(startPos.x, currentPos.x),
+                        y: Math.min(startPos.y, currentPos.y),
+                        width: Math.abs(currentPos.x - startPos.x),
+                        height: Math.abs(currentPos.y - startPos.y),
+                        fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                        stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                        strokeWidth: parseInt(strokeWidthSlider.value),
+                        strokeStyle: document.getElementById('stroke-style').value,
+                        opacity: parseFloat(opacitySlider.value)
+                    });
+                } else if (currentTool === 'circle') {
+                    const radius = Math.sqrt((currentPos.x - startPos.x) ** 2 + (currentPos.y - startPos.y) ** 2) / 2;
+                    const centerX = (startPos.x + currentPos.x) / 2;
+                    const centerY = (startPos.y + currentPos.y) / 2;
+                    layerManager.addObject({
+                        type: 'circle',
+                        cx: centerX,
+                        cy: centerY,
+                        r: radius,
+                        fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                        stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                        strokeWidth: parseInt(strokeWidthSlider.value),
+                        strokeStyle: document.getElementById('stroke-style').value,
+                        opacity: parseFloat(opacitySlider.value)
+                    });
+                } else if (currentTool === 'text' && startPos) {
+                    const text = prompt("Enter text:");
+                    if (text) {
+                        layerManager.addObject({
+                            type: 'text',
+                            x: startPos.x,
+                            y: startPos.y,
+                            text: text,
+                            fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a),
+                            stroke: 'transparent',
+                            size: 24,
+                            opacity: parseFloat(opacitySlider.value)
+                        });
+                    }
+                }
+                currentPath = [];
+                startPos = null;
+                lastTouchDistance = null;
+                initialRect = null;
+                drawCanvas();
+                saveState();
+            });
+
+            uploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                elements.uploadArea.classList.add('dragover');
+                uploadArea.classList.add('dragover');
             });
-            elements.uploadArea.addEventListener('dragleave', () => {
-                elements.uploadArea.classList.remove('dragover');
-            });
-            elements.uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                elements.uploadArea.classList.remove('dragover');
-                handleFile(e.dataTransfer.files[0]);
-            });
-        }
 
-        resetUI();
-    });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                handleFile(file);
+            });
+
+            browseButton.addEventListener('click', () => {
+                fileUpload.click();
+            });
+
+            fileUpload.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                handleFile(file);
+                e.target.value = null; // Reset file input
+            });
+
+            function handleFile(file) {
+                if (!file) return;
+                if (!VALID_TYPES.includes(file.type)) {
+                    document.getElementById('error-message').textContent = 'Invalid file type. Only JPG, PNG, and SVG are supported.';
+                    document.getElementById('error-message').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('error-message').classList.add('hidden'), 5000);
+                    return;
+                }
+                if (file.size > MAX_FILE_SIZE) {
+                    document.getElementById('error-message').textContent = File size exceeds the limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB.;
+                    document.getElementById('error-message').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('error-message').classList.add('hidden'), 5000);
+                    return;
+                }
+
+                document.getElementById('upload-instructions').textContent = Processing ${file.name}...;
+                document.getElementById('upload-instructions').classList.remove('hidden');
+                document.getElementById('progress-bar').classList.remove('hidden');
+                document.getElementById('progress-fill').style.width = '30%';
+
+                setTimeout(async () => {
+                    document.getElementById('progress-fill').style.width = '70%';
+                    if (file.type.startsWith('image/')) {
+                        const img = await loadImage(file);
+                        // Basic image import as a rectangle for now
+                        layerManager.addObject({
+                            type: 'rect',
+                            x: 50,
+                            y: 50,
+                            width: img.width > 500 ? 300 : img.width,
+                            height: img.height > 300 ? 200 : img.height,
+                            fill: url(blob:${img.src}),
+                            stroke: 'transparent',
+                            strokeWidth: 0,
+                            opacity: 1
+                        });
+                        drawCanvas();
+                    } else if (file.type === 'image/svg+xml') {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            document.getElementById('preview-window').innerHTML = e.target.result;
+                            // Basic SVG import - more complex parsing might be needed
+                            const svgElement = document.querySelector('#preview-window svg');
+                            if (svgElement) {
+                                const width = parseFloat(svgElement.getAttribute('width') || 200);
+                                const height = parseFloat(svgElement.getAttribute('height') || 150);
+                                const svgDataUrl = data:image/svg+xml;base64,${btoa(e.target.result)};
+                                layerManager.addObject({
+                                    type: 'rect',
+                                    x: 80,
+                                    y: 80,
+                                    width: width > 500 ? 300 : width,
+                                    height: height > 300 ? 200 : height,
+                                    fill: url(${svgDataUrl}),
+                                    stroke: 'transparent',
+                                    strokeWidth: 0,
+                                    opacity: 1
+                                });
+                                drawCanvas();
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                    document.getElementById('progress-fill').style.width = '100%';
+                    document.getElementById('upload-instructions').classList.add('hidden');
+                    setTimeout(() => document.getElementById('progress-bar').classList.add('hidden'), 1000);
+                }, 500);
+            }
+
+            exportSvgButton.addEventListener('click', () => {
+                canvasToSvg();
+                const svgString = document.getElementById('svg-output').textContent;
+                downloadSvg(svgString, filenameInput.value + '.svg');
+            });
+
+            exportPngButton.addEventListener('click', downloadPng);
+            saveProjectButton.addEventListener('click', saveProject);
+            loadProjectButton.addEventListener('click', () => projectUploadInput.click());
+            projectUploadInput.addEventListener('change', loadProject);
+
+            previewModeButton.addEventListener('click', () => {
+                const canvasSection = document.getElementById('canvas-section');
+                const exportSection = document.getElementById('export-section');
+                isPreviewMode = !isPreviewMode;
+                if (isPreviewMode) {
+                    canvasToSvg();
+                    canvasSection.classList.add('hidden');
+                    exportSection.classList.remove('hidden');
+                    previewModeButton.textContent = 'Edit';
+                } else {
+                    canvasSection.classList.remove('hidden');
+                    exportSection.classList.add('hidden');
+                    previewModeButton.textContent = 'Preview';
+                }
+            });
+
+            debugToggle.addEventListener('click
+
+
+
+
+
+last push! x
+
+
+HTML
+
+, () => {
+                debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+            });
+
+            closeDebugButton.addEventListener('click', () => {
+                debugPanel.style.display = 'none';
+            });
+
+            helpToggle.addEventListener('click', () => {
+                helpModal.style.display = 'block';
+            });
+
+            closeHelpButton.addEventListener('click', () => {
+                helpModal.style.display = 'none';
+            });
+
+            themeToggle.addEventListener('click', () => {
+                settings.theme = settings.theme === 'dark' ? 'light' : 'dark';
+                localStorage.setItem('settings', JSON.stringify(settings));
+                applySettings();
+            });
+
+            highContrastToggle.addEventListener('click', () => {
+                settings.highContrast = !settings.highContrast;
+                localStorage.setItem('settings', JSON.stringify(settings));
+                applySettings();
+            });
+
+            resetButton.addEventListener('click', () => {
+                if (confirm('Are you sure you want to reset the session? All unsaved data will be lost.')) {
+                    localStorage.removeItem('swatches');
+                    localStorage.removeItem('settings');
+                    layerManager.layers = [{ objects: [], visible: true, locked: false, name: 'Layer 1' }];
+                    layerManager.currentLayerIndex = 0;
+                    swatches = [];
+                    settings = {"theme":"dark","highContrast":false};
+                    applySettings();
+                    updateSwatchesDisplay();
+                    updateLayerSelect();
+                    drawCanvas();
+                    undoStack = [];
+                    redoStack = [];
+                }
+            });
+
+            layerSelect.addEventListener('change', () => {
+                layerManager.setActiveLayer(parseInt(layerSelect.value));
+            });
+
+            addLayerButton.addEventListener('click', () => {
+                layerManager.addLayer();
+                drawCanvas();
+                saveState();
+            });
+
+            toggleLayerVisibilityButton.addEventListener('click', () => {
+                const index = layerManager.currentLayerIndex;
+                layerManager.toggleVisibility(index);
+            });
+
+            toggleLayerLockButton.addEventListener('click', () => {
+                const index = layerManager.currentLayerIndex;
+                layerManager.toggleLock(index);
+            });
+
+            snapGridCheckbox.addEventListener('change', () => {
+                snapToGridEnabled = snapGridCheckbox.checked;
+            });
+
+            objectFillInput.addEventListener('input', () => {
+                if (selectedObject && (/^#?[0-9a-fA-F]{0,6}$/.test(objectFillInput.value))) {
+                    selectedObject.fill = objectFillInput.value;
+                    drawCanvas();
+                    saveState();
+                }
+            });
+
+            objectStrokeInput.addEventListener('input', () => {
+                if (selectedObject && (/^#?[0-9a-fA-F]{0,6}$/.test(objectStrokeInput.value))) {
+                    selectedObject.stroke = objectStrokeInput.value;
+                    drawCanvas();
+                    saveState();
+                }
+            });
+
+            objectOpacitySlider.addEventListener('input', () => {
+                if (selectedObject) {
+                    selectedObject.opacity = parseFloat(objectOpacitySlider.value);
+                    drawCanvas();
+                    saveState();
+                }
+            });
+
+            objectStrokeWidthSlider.addEventListener('input', () => {
+                if (selectedObject) {
+                    selectedObject.strokeWidth = parseInt(objectStrokeWidthSlider.value);
+                    drawCanvas();
+                    saveState();
+                }
+            });
+
+            function setActiveTool(button) {
+                document.querySelectorAll('#drawing-tools .button').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+            }
+
+            drawingCanvas.addEventListener('mousemove', (e) => {
+                if (currentTool === 'select' && selectedObject) {
+                    const rect = drawingCanvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    // Basic hover effect (can be expanded)
+                    drawingCanvas.style.cursor = 'grab';
+                } else if (currentTool !== 'eyedropper') {
+                    drawingCanvas.style.cursor = 'crosshair';
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    isDrawing = false;
+                    currentPath = [];
+                    drawCanvas();
+                } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                    undo();
+                } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                    redo();
+                } else if (e.key === 'Delete' && selectedObject) {
+                    const index = layerManager.getActiveObjects().indexOf(selectedObject);
+                    if (index > -1) {
+                        layerManager.removeObject(index);
+                        selectedObject = null;
+                        updatePropertiesPanel();
+                        saveState();
+                    }
+                } else if (e.key === '1') {
+                    penToolButton.click();
+                } else if (e.key === '2') {
+                    rectToolButton.click();
+                } else if (e.key === '3') {
+                    circleToolButton.click();
+                } else if (e.key === '4') {
+                    textToolButton.click();
+                } else if (e.key === 's') {
+                    selectToolButton.click();
+                }
+            });
+
+            // Basic offline detection
+            window.addEventListener('offline', () => {
+                document.getElementById('offline-indicator').classList.remove('hidden');
+            });
+
+            window.addEventListener('online', () => {
+                document.getElementById('offline-indicator').classList.add('hidden');
+            });
+
+            function showTooltip(message, x, y) {
+                tooltipElement.textContent = message;
+                tooltipElement.style.left = ${x + 10}px;
+                tooltipElement.style.top = ${y + 10}px;
+                tooltipElement.style.display = 'block';
+            }
+
+            function hideTooltip() {
+                tooltipElement.style.display = 'none';
+            }
+
+            // Example tooltip (can be expanded for other elements)
+            penToolButton.addEventListener('mouseover', (e) => showTooltip('Pen Tool (Freehand Drawing)', e.clientX, e.clientY));
+            penToolButton.addEventListener('mouseout', hideTooltip);
+            rectToolButton.addEventListener('mouseover', (e) => showTooltip('Rectangle Tool', e.clientX, e.clientY));
+            rectToolButton.addEventListener('mouseout', hideTooltip);
+            circleToolButton.addEventListener('mouseover', (e) => showTooltip('Circle Tool', e.clientX, e.clientY));
+            circleToolButton.addEventListener('mouseout', hideTooltip);
+            textToolButton.addEventListener('mouseover', (e) => showTooltip('Text Tool', e.clientX, e.clientY));
+            textToolButton.addEventListener('mouseout', hideTooltip);
+            selectToolButton.addEventListener('mouseover', (e) => showTooltip('Select Tool (Move/Resize)', e.clientX, e.clientY));
+            selectToolButton.addEventListener('mouseout', hideTooltip);
+            undoButton.addEventListener('mouseover', (e) => showTooltip('Undo (Ctrl+Z)', e.clientX, e.clientY));
+            undoButton.addEventListener('mouseout', hideTooltip);
+            redoButton.addEventListener('mouseover', (e) => showTooltip('Redo (Ctrl+Y)', e.clientX, e.clientY));
+            redoButton.addEventListener('mouseout', hideTooltip);
+            deleteButton.addEventListener('mouseover', (e) => showTooltip('Delete Selected Object', e.clientX, e.clientY));
+            deleteButton.addEventListener('mouseout', hideTooltip);
+            clearCanvasButton.addEventListener('mouseover', (e) => showTooltip('Clear Canvas', e.clientX, e.clientY));
+            clearCanvasButton.addEventListener('mouseout', hideTooltip);
+            previewModeButton.addEventListener('mouseover', (e) => showTooltip('Toggle Preview Mode', e.clientX, e.clientY));
+            previewModeButton.addEventListener('mouseout', hideTooltip);
+            snapGridCheckbox.addEventListener('mouseover', (e) => showTooltip('Snap to Grid', e.clientX, e.clientY));
+            snapGridCheckbox.addEventListener('mouseout', hideTooltip);
+        });
     </script>
 </body>
 </html>

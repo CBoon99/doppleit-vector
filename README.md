@@ -1,83 +1,65 @@
 # Doppleit Vector v2 Pro
 
-**Reflect your vision. Vector precision.**
+A powerful, private, in-browser vector graphics editor.  
+Create and edit SVG illustrations with speed, clarity, and full control—entirely offline.
 
-Doppleit Vector is a real-time, fully client-side image vectorization tool built for speed, clarity, and creative freedom — no installs, no uploads, no compromise.
+## Features
 
----
+- **🎨 Intuitive Drawing Tools:** Pen (freehand), Rectangle, Circle, and Text tools.
+- **🌈 Full Color Control:** HSL color wheel, lightness/opacity sliders, plus HEX, RGB, and HSL input fields.
+- **✏️ Stroke Styling:** Choose stroke width and toggle between solid, dashed, and dotted lines.
+- **🪄 Fill Toggle:** Quickly enable or disable shape fill.
+- **📚 Layer Management:** Add, lock, and toggle visibility on multiple layers.
+- **🧱 Object Properties:** Select objects and edit their fill, stroke, opacity, and stroke width in a dedicated panel.
+- **↩️ Undo/Redo:** Unlimited stack-based undo and redo.
+- **🗑️ Delete & Clear:** Delete selected objects or clear the entire canvas.
+- **📐 Snap to Grid:** Enable grid snapping for pixel-precise alignment.
+- **📥 Import:** Drag and drop or browse to load JPG, PNG, or SVG files.
+- **📤 Export:** Download your work as SVG or PNG.
+- **💾 Save & Load Projects:** Save your entire session as a JSON file and reload it anytime.
+- **🌙 Themes & Accessibility:** Toggle between dark/light themes and high-contrast mode.
+- **🔍 Debug Panel:** Inspect raw SVG output.
+- **❓ Help Modal:** Quick in-app usage guide.
+- **📴 Offline Indicator:** Alerts you if you're disconnected—though the app runs 100% offline.
 
-## 🚀 Features
+## How to Use
 
-- 🎨 **Image-to-SVG Vectorization**
-  - Drop in `.jpg`, `.jpeg`, or `.png`
-  - Choose color detail and remove background
-  - Get clean, scalable SVG output
+1. **Launch:** Open `index.html` in your browser.
+2. **Upload:** Drag in a file or use “Browse Files” to start with an image or SVG.
+3. **Draw:** Select a tool and click/drag on the canvas.
+4. **Color & Style:** Use the color wheel and controls to fine-tune fills and strokes.
+5. **Layers:** Manage multiple object layers with lock/visibility toggles.
+6. **Edit:** Use the Select tool to adjust object properties live.
+7. **Preview & Export:** Toggle “Preview” to view the generated SVG, then export or save your project.
 
-- ⚙️ **Client-Side Performance**
-  - No files are uploaded or stored
-  - Uses a sandboxed [Potrace](https://potrace.sourceforge.net/) engine in a Web Worker
-  - Fully sanitized output via [DOMPurify](https://github.com/cure53/DOMPurify)
+## Project Structure
 
-- 🧠 **UX Focus**
-  - Drag & drop or browse
-  - Live progress bar
-  - Animated loading spinner
-  - Reset / reconvert flow
-  - Dark-mode friendly Doppleit styling
-
-- 🔐 **Security**
-  - CSP-enforced
-  - DOM injection protection (via DOMPurify)
-  - SVGs generated and sandboxed in-browser
-  - No analytics, no tracking, no data collection
-
----
-
-## 🧪 Supported Inputs
-
-- `.jpg`, `.jpeg`, `.png` up to **5MB**
-- Non-image files are blocked
-- Large or invalid files are rejected with user feedback
-
----
-
-## 📄 Output
-
-- Clean SVG with embedded path/image data
-- Fully sanitized for browser-safe rendering
-- Downloaded as: `doppleit-vector-[timestamp].svg`
-
----
-
-## 🛠 Tech Stack
-
-- HTML5 + CSS + JavaScript (no build tools required)
-- [Potrace](https://github.com/tbyrne/potrace) (via CDN)
-- [DOMPurify](https://github.com/cure53/DOMPurify)
-- Hosted on Netlify / any static provider
-
----
-
-## 📦 Local Setup
-
-You can run it offline by opening `index.html` directly in a browser, or:
-
-```bash
-# Recommended (for CSP + local worker blob support)
-npx serve
-# Then open http://localhost:3000
+```
+Doppleit-Vector/
+├── index.html          # Main application file
+├── README.md           # This file
+├── assets/             # (Optional: SVG icons, fonts, etc.)
+└── styles/             # (Optional: external CSS, if separated)
 ```
 
+## Contributing
+
+Pull requests are welcome if the project is made open-source.  
+For now, feedback is appreciated via the [Feedback](#) page.
+
+## License
+
+MIT License *(or update with your preferred license)*  
+© 2025 Doppleit. All rights reserved.
+
+## Acknowledgements
+
+- Font: [Inter by Rasmus Andersson](https://rsms.me/inter/)
+- Icons: Inline SVG, original work
+- Color conversion algorithms inspired by [StackOverflow](https://stackoverflow.com/), refined by hand.
+- Built with love by **Carl** 💡
+
 ---
 
-## 📘 License
-
-MIT — free to use, modify, or fork.  
-Doppleit branding, logo, and visual identity © Carl Boon.
-
----
-
-## ✨ Author
-
-Built by **Carl Boon**  
-🔗 [doppleit.com](https://doppleit.com) (coming soon)
+> This is a handcrafted creative tool designed for privacy, performance, and control.  
+> It runs 100% in-browser. No ads. No tracking. No bloat.
