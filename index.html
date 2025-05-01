@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:" />
     <title>Doppleit Vector v2 Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" href="data:;base64,=">
-    <!-- Keep existing CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="icon" href="data:;base64,=" />
 </head>
 <body>
     <div id="app">
@@ -16,18 +15,13 @@
             <p id="tagline" class="glitch" data-text="Reflect Your Vision. Vector Precision.">Reflect Your Vision. Vector Precision.</p>
         </div>
 
-        <!-- Fixed upload area with single ID -->
         <div id="upload-area">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <!-- SVG paths -->
-            </svg>
             <p>Drag and drop your image here</p>
             <small>(.jpg, .jpeg, .png files are supported, max 5MB)</small>
             <button class="button" id="browse-button">Browse Files</button>
-            <input type="file" id="file-upload" accept="image/*" hidden>
+            <input type="file" id="file-upload" accept="image/*" hidden />
         </div>
 
-        <!-- Conversion section with all required elements -->
         <div id="conversion-section">
             <div id="settings-panel">
                 <label for="color-simplification">Color Detail:</label>
@@ -36,9 +30,8 @@
                     <option value="8" selected>Medium</option>
                     <option value="16">Low</option>
                 </select>
-
                 <label for="background-removal">Remove Background:</label>
-                <input type="checkbox" id="background-removal">
+                <input type="checkbox" id="background-removal" />
             </div>
 
             <div id="progress-bar">
@@ -67,14 +60,12 @@
     <script src="https://cdn.jsdelivr.net/npm/potrace@2.1.8/dist/potrace.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Safe element getter with error logging
         const safe = (id) => {
             const el = document.getElementById(id);
             if (!el) console.error(`Missing element: #${id}`);
             return el;
         };
 
-        // Element mapping with validation
         const elements = {
             uploadArea: safe('upload-area'),
             fileUpload: safe('file-upload'),
@@ -92,7 +83,6 @@
             backgroundRemoval: safe('background-removal')
         };
 
-        // Worker creation
         const createWorker = () => {
             const workerCode = `
                 self.addEventListener('message', async (e) => {
@@ -104,28 +94,24 @@
                                 resolve(Potrace.getSVG());
                             });
                         });
-                        
+
                         const svg = await trace({
                             color: options.removeBackground ? 'transparent' : '#ffffff',
                             threshold: 200 - (options.colorSimplification * 10),
                             posterize: options.colorSimplification
                         });
-                        
+
                         postMessage({ svg });
                     } catch (error) {
                         postMessage({ error: error.message });
                     }
                 });
             `;
-
-            return new Worker(URL.createObjectURL(
-                new Blob([workerCode], { type: 'application/javascript' })
-            ));
+            return new Worker(URL.createObjectURL(new Blob([workerCode], { type: 'application/javascript' })));
         };
 
         let worker = null;
 
-        // Core functions with null checks
         function updateProgress(percentage) {
             if (elements.progressFill) {
                 elements.progressFill.style.width = `${percentage}%`;
@@ -150,9 +136,83 @@
             }
         }
 
-        // Event listeners with existence checks
+        function showError(message) {
+            elements.errorMessage.textContent = message;
+            elements.errorMessage.style.display = 'block';
+            elements.loadingMessage.style.display = 'none';
+        }
+
+        function showPreview(svgContent) {
+            elements.previewWindow.innerHTML = svgContent;
+            elements.previewWindow.classList.remove('hidden');
+            elements.downloadButton.disabled = false;
+        }
+
+        function simulateProgress() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress = Math.min(progress + Math.random() * 15, 95);
+                updateProgress(progress);
+                if (progress >= 95) clearInterval(interval);
+            }, 300);
+        }
+
+        function downloadSVG() {
+            const svg = elements.previewWindow.querySelector('svg');
+            if (!svg) return showError('No SVG to download');
+            const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `doppleit-vector-${Date.now()}.svg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            elements.confirmationMessage.classList.remove('hidden');
+            setTimeout(() => elements.confirmationMessage.classList.add('hidden'), 3000);
+        }
+
+        function handleFile(file) {
+            if (!file || file.size > 5 * 1024 * 1024) return showError('File too large (max 5MB)');
+            if (!file.type.startsWith('image/')) return showError('Invalid file type.');
+
+            resetUI();
+            elements.uploadArea.style.display = 'none';
+            elements.conversionSection.style.display = 'block';
+            elements.loadingMessage.style.display = 'block';
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                worker = createWorker();
+                worker.onmessage = (e) => {
+                    elements.loadingMessage.style.display = 'none';
+                    if (e.data.error) return showError(e.data.error);
+                    showPreview(DOMPurify.sanitize(e.data.svg));
+                    updateProgress(100);
+                };
+                worker.postMessage({
+                    imageData: reader.result,
+                    options: {
+                        colorSimplification: parseInt(elements.colorSimplification.value),
+                        removeBackground: elements.backgroundRemoval.checked
+                    }
+                });
+                simulateProgress();
+            };
+            reader.readAsDataURL(file);
+        }
+
         if (elements.browseButton && elements.fileUpload) {
             elements.browseButton.addEventListener('click', () => elements.fileUpload.click());
+        }
+
+        if (elements.convertAnotherButton) {
+            elements.convertAnotherButton.addEventListener('click', resetUI);
+        }
+
+        if (elements.downloadButton) {
+            elements.downloadButton.addEventListener('click', downloadSVG);
         }
 
         if (elements.uploadArea) {
@@ -160,11 +220,9 @@
                 e.preventDefault();
                 elements.uploadArea.classList.add('dragover');
             });
-
             elements.uploadArea.addEventListener('dragleave', () => {
                 elements.uploadArea.classList.remove('dragover');
             });
-
             elements.uploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
                 elements.uploadArea.classList.remove('dragover');
@@ -172,7 +230,6 @@
             });
         }
 
-        // Initialize application
         resetUI();
     });
     </script>
