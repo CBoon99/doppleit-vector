@@ -7,102 +7,174 @@
     <title>Doppleit Vector v2 Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="data:;base64,=">
-    <!-- CSS remains unchanged -->
+    <!-- Keep existing CSS -->
 </head>
 <body>
     <div id="app">
-        <!-- Fixed upload area (removed duplicate id) -->
-        <div id="upload-area">
-            <!-- SVG and content remains the same -->
+        <div id="header">
+            <h1>Doppleit Vector</h1>
+            <p id="tagline" class="glitch" data-text="Reflect Your Vision. Vector Precision.">Reflect Your Vision. Vector Precision.</p>
         </div>
 
-        <!-- Rest of HTML remains unchanged -->
+        <!-- Fixed upload area with single ID -->
+        <div id="upload-area">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <!-- SVG paths -->
+            </svg>
+            <p>Drag and drop your image here</p>
+            <small>(.jpg, .jpeg, .png files are supported, max 5MB)</small>
+            <button class="button" id="browse-button">Browse Files</button>
+            <input type="file" id="file-upload" accept="image/*" hidden>
+        </div>
+
+        <!-- Conversion section with all required elements -->
+        <div id="conversion-section">
+            <div id="settings-panel">
+                <label for="color-simplification">Color Detail:</label>
+                <select id="color-simplification">
+                    <option value="4">High</option>
+                    <option value="8" selected>Medium</option>
+                    <option value="16">Low</option>
+                </select>
+
+                <label for="background-removal">Remove Background:</label>
+                <input type="checkbox" id="background-removal">
+            </div>
+
+            <div id="progress-bar">
+                <div id="progress-fill"></div>
+            </div>
+
+            <div id="loading-message">Vectorizing... <span class="spinner"></span></div>
+            <div id="confirmation-message">Download will start shortly!</div>
+            <div id="error-message"></div>
+
+            <div id="preview-window" class="hidden"></div>
+
+            <div id="conversion-controls">
+                <button class="button" id="download-button" disabled>Download SVG</button>
+                <button class="button" id="convert-another">Convert Another</button>
+            </div>
+        </div>
+
+        <div id="footer">
+            <a href="#">Privacy</a> • <a href="#">FAQ</a> • <a href="#">Feedback</a>
+            <p style="margin-top: 5px; font-size: 10px;">Images are processed in-browser. No files are uploaded or stored.</p>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/potrace@2.1.8/dist/potrace.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Safe element getter with error checking
-            const safe = (id) => {
-                const el = document.getElementById(id);
-                if (!el) console.error(`Missing element: #${id}`);
-                return el;
-            };
+    document.addEventListener('DOMContentLoaded', () => {
+        // Safe element getter with error logging
+        const safe = (id) => {
+            const el = document.getElementById(id);
+            if (!el) console.error(`Missing element: #${id}`);
+            return el;
+        };
 
-            // Corrected elements mapping
-            const elements = {
-                fileUpload: safe('file-upload'),
-                browseButton: safe('browse-button'),
-                conversionSection: safe('conversion-section'),
-                previewWindow: safe('preview-window'),
-                errorMessage: safe('error-message'),
-                confirmationMessage: safe('confirmation-message'),
-                downloadButton: safe('download-button'),
-                convertAnotherButton: safe('convert-another'),
-                progressBar: safe('progress-bar'),
-                progressFill: safe('progress-fill'),
-                loadingMessage: safe('loading-message'),
-                uploadArea: safe('upload-area')
-            };
+        // Element mapping with validation
+        const elements = {
+            uploadArea: safe('upload-area'),
+            fileUpload: safe('file-upload'),
+            browseButton: safe('browse-button'),
+            conversionSection: safe('conversion-section'),
+            previewWindow: safe('preview-window'),
+            errorMessage: safe('error-message'),
+            confirmationMessage: safe('confirmation-message'),
+            downloadButton: safe('download-button'),
+            convertAnotherButton: safe('convert-another'),
+            progressBar: safe('progress-bar'),
+            progressFill: safe('progress-fill'),
+            loadingMessage: safe('loading-message'),
+            colorSimplification: safe('color-simplification'),
+            backgroundRemoval: safe('background-removal')
+        };
 
-            // Worker creation and core functions
-            const createWorker = () => {
-                const workerCode = `
-                    self.addEventListener('message', async (e) => {
-                        const { imageData, options } = e.data;
-                        try {
-                            const trace = (params) => new Promise(resolve => {
-                                Potrace.loadImageFromURL(imageData, () => {
-                                    Potrace.process(params);
-                                    resolve(Potrace.getSVG());
-                                });
+        // Worker creation
+        const createWorker = () => {
+            const workerCode = `
+                self.addEventListener('message', async (e) => {
+                    const { imageData, options } = e.data;
+                    try {
+                        const trace = (params) => new Promise(resolve => {
+                            Potrace.loadImageFromURL(imageData, () => {
+                                Potrace.process(params);
+                                resolve(Potrace.getSVG());
                             });
-                            
-                            const svg = await trace({
-                                color: options.removeBackground ? 'transparent' : '#ffffff',
-                                threshold: 200 - (options.colorSimplification * 10),
-                                posterize: options.colorSimplification
-                            });
-                            
-                            postMessage({ svg });
-                        } catch (error) {
-                            postMessage({ error: error.message });
-                        }
-                    });
-                `;
+                        });
+                        
+                        const svg = await trace({
+                            color: options.removeBackground ? 'transparent' : '#ffffff',
+                            threshold: 200 - (options.colorSimplification * 10),
+                            posterize: options.colorSimplification
+                        });
+                        
+                        postMessage({ svg });
+                    } catch (error) {
+                        postMessage({ error: error.message });
+                    }
+                });
+            `;
 
-                const blob = new Blob([workerCode], { type: 'application/javascript' });
-                return new Worker(URL.createObjectURL(blob));
-            };
+            return new Worker(URL.createObjectURL(
+                new Blob([workerCode], { type: 'application/javascript' })
+            ));
+        };
 
-            let worker = null;
+        let worker = null;
 
-            // Fixed resetUI function
-            function resetUI() {
-                if (elements.conversionSection) elements.conversionSection.style.display = 'none';
-                if (elements.uploadArea) elements.uploadArea.style.display = 'flex';
-                if (elements.previewWindow) {
-                    elements.previewWindow.classList.add('hidden');
-                    elements.previewWindow.innerHTML = '';
-                }
-                if (elements.errorMessage) elements.errorMessage.style.display = 'none';
-                if (elements.confirmationMessage) elements.confirmationMessage.style.display = 'none';
-                if (elements.downloadButton) elements.downloadButton.disabled = true;
-                if (elements.fileUpload) elements.fileUpload.value = '';
-                updateProgress(0);
-                if (worker) {
-                    worker.terminate();
-                    worker = null;
-                }
+        // Core functions with null checks
+        function updateProgress(percentage) {
+            if (elements.progressFill) {
+                elements.progressFill.style.width = `${percentage}%`;
             }
+        }
 
-            // Rest of the JavaScript logic with proper error handling
-            // ... (event listeners and other functions remain the same with null checks)
+        function resetUI() {
+            if (elements.conversionSection) elements.conversionSection.style.display = 'none';
+            if (elements.uploadArea) elements.uploadArea.style.display = 'flex';
+            if (elements.previewWindow) {
+                elements.previewWindow.classList.add('hidden');
+                elements.previewWindow.innerHTML = '';
+            }
+            if (elements.errorMessage) elements.errorMessage.style.display = 'none';
+            if (elements.confirmationMessage) elements.confirmationMessage.style.display = 'none';
+            if (elements.downloadButton) elements.downloadButton.disabled = true;
+            if (elements.fileUpload) elements.fileUpload.value = '';
+            updateProgress(0);
+            if (worker) {
+                worker.terminate();
+                worker = null;
+            }
+        }
 
-            // Initialization
-            resetUI();
-        });
+        // Event listeners with existence checks
+        if (elements.browseButton && elements.fileUpload) {
+            elements.browseButton.addEventListener('click', () => elements.fileUpload.click());
+        }
+
+        if (elements.uploadArea) {
+            elements.uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                elements.uploadArea.classList.add('dragover');
+            });
+
+            elements.uploadArea.addEventListener('dragleave', () => {
+                elements.uploadArea.classList.remove('dragover');
+            });
+
+            elements.uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                elements.uploadArea.classList.remove('dragover');
+                handleFile(e.dataTransfer.files[0]);
+            });
+        }
+
+        // Initialize application
+        resetUI();
+    });
     </script>
 </body>
 </html>
