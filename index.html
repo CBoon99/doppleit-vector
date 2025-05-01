@@ -1,98 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <!-- ... (keep head section unchanged) ... -->
-</head>
-<body>
-    <!-- ... (keep HTML structure unchanged) ... -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // UI Elements
+    const elements = {
+        fileUpload: document.getElementById('file-upload'),
+        browseButton: document.getElementById('browse-button'),
+        conversionSection: document.getElementById('conversion-section'),
+        previewWindow: document.getElementById('preview-window'),
+        errorMessage: document.getElementById('error-message'),
+        confirmationMessage: document.getElementById('confirmation-message'),
+        downloadButton: document.getElementById('download-button'),
+        convertAnotherButton: document.getElementById('convert-another'),
+        progressBar: document.getElementById('progress-bar'),
+        progressFill: document.getElementById('progress-fill'),
+        loadingMessage: document.getElementById('loading-message'),
+        uploadArea: document.getElementById('upload-area')
+    };
 
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/potrace@2.1.8/dist/potrace.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Corrected Elements Definition
-            const elements = {
-                fileUpload: document.getElementById('file-upload'),
-                browseButton: document.getElementById('browse-button'),
-                conversionSection: document.getElementById('conversion-section'),
-                previewWindow: document.getElementById('preview-window'),
-                errorMessage: document.getElementById('error-message'),
-                confirmationMessage: document.getElementById('confirmation-message'),
-                downloadButton: document.getElementById('download-button'),
-                convertAnotherButton: document.getElementById('convert-another'),
-                progressBar: document.getElementById('progress-bar'),
-                progressFill: document.getElementById('progress-fill'),
-                loadingMessage: document.getElementById('loading-message'),
-                uploadArea: document.getElementById('upload-area')
-            };
+    // ... (keep worker and other functions here) ...
 
-            // Corrected Worker Code
-            const createWorker = () => {
-                const workerCode = `
-                    self.addEventListener('message', async (e) => {
-                        const { imageData, options } = e.data;
-                        try {
-                            const trace = (params) => new Promise(resolve => {
-                                Potrace.loadImageFromURL(imageData, () => {
-                                    Potrace.process(params);
-                                    resolve(Potrace.getSVG());
-                                });
-                            });
-                            
-                            const svg = await trace({
-                                color: options.removeBackground ? 'transparent' : '#ffffff',
-                                threshold: 200 - (options.colorSimplification * 10),
-                                posterize: options.colorSimplification
-                            });
-                            
-                            postMessage({ svg });
-                        } catch (error) {
-                            postMessage({ error: error.message });
-                        }
-                    });
-                `;
+    // CORRECTED RESET FUNCTION
+    function resetUI() {
+        elements.conversionSection.style.display = 'none';
+        elements.uploadArea.style.display = 'flex';
+        elements.previewWindow.classList.add('hidden');
+        elements.previewWindow.innerHTML = '';
+        elements.errorMessage.style.display = 'none';
+        elements.confirmationMessage.style.display = 'none';
+        elements.downloadButton.disabled = true;
+        elements.fileUpload.value = '';
+        updateProgress(0);
+        if (worker) {
+            worker.terminate();
+            worker = null;
+        }
+    }
 
-                const blob = new Blob([workerCode], { type: 'application/javascript' });
-                return new Worker(URL.createObjectURL(blob));
-            };
-
-            let worker = null;
-
-            // Fixed Progress Update
-            function updateProgress(percentage) {
-                elements.progressFill.style.width = `${percentage}%`;
-            }
-
-            // Fixed Download Function
-            function downloadSVG() {
-                const svg = elements.previewWindow.querySelector('svg');
-                if (!svg) {
-                    showError('No SVG to download.');
-                    return;
-                }
-
-                const svgData = svg.outerHTML;
-                const blob = new Blob([svgData], { type: 'image/svg+xml' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `doppleit-vector-${Date.now()}.svg`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                elements.confirmationMessage.style.display = 'block';
-                setTimeout(() => {
-                    elements.confirmationMessage.style.display = 'none';
-                }, 3000);
-            }
-
-            // Rest of the JavaScript logic remains here
-            // ... (keep all other functions and event listeners unchanged)
-            
-            // Initial setup
-            resetUI();
-        });
-    </script>
-</body>
-</html>
+    // INITIAL SETUP
+    resetUI(); // Now properly defined before calling
+});
+</script>
