@@ -307,31 +307,23 @@
             to { transform: rotate(360deg); }
         }
 
-        #debug-panel, #help-modal {
-            position: fixed;
-            background: var(--panel-bg);
-            padding: 10px;
-            border-radius: 6px;
-            max-height: 80vh;
-            overflow: auto;
-            z-index: 1000;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
+#help-modal {
+    position: fixed;
+    background: var(--panel-bg);
+    padding: 10px;
+    border-radius: 6px;
+    max-height: 80vh;
+    overflow: auto;
+    z-index: 1000;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 400px;
+    display: none;
+}
 
-        #debug-panel {
-            bottom: 10px;
-            right: 10px;
-            max-width: 300px;
-            display: none;
-        }
-
-        #help-modal {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            max-width: 400px;
-            display: none;
-        }
+       
 
         .grid {
             position: absolute;
@@ -504,12 +496,6 @@
             <span class="hidden" id="svg-description"></span>
         </div>
 
-        <div id="debug-panel" aria-label="Debug panel">
-            <h3>Debug</h3>
-            <pre id="svg-output"></pre>
-            <button class="button" id="close-debug" aria-label="Close debug panel">Close</button>
-        </div>
-
         <div id="help-modal" aria-label="Help modal">
             <h3>Help</h3>
             <p>Use the pen tool (1) to draw freehand, rectangle (2), circle (3), or text (4) tools to add shapes, or select (S) to edit. Adjust colors with the wheel, sliders, or eyedropper. Click objects to edit properties. Press Esc to cancel, Ctrl+Z to undo.</p>
@@ -536,7 +522,6 @@
         let currentTool = 'pen';
         let layerManager = new LayerManager();
         let selectedObject = null;
-        let selectedHandle = null;
         let isDrawing = false;
         let currentPath = [];
         let startPos = null;
@@ -548,7 +533,6 @@
         let initialRect = null;
         let undoStack = [];
         let redoStack = [];
-        let lastUpdate = 0;
         let snapToGridEnabled = false;
         let redrawTimeout = null;
 
@@ -928,7 +912,6 @@ function canvasToSvg() {
             });
 
             const svgString = new XMLSerializer().serializeToString(svg);
-            document.getElementById('svg-output').textContent = svgString;
             document.getElementById('preview-window').innerHTML = svgString;
             document.getElementById('preview-window').classList.remove('hidden');
             return svgString;
@@ -1196,9 +1179,6 @@ function canvasToSvg() {
             const exportPngButton = document.getElementById('export-png');
             const filenameInput = document.getElementById('filename');
             const previewModeButton = document.getElementById('preview-mode');
-            const debugToggle = document.getElementById('debug-toggle');
-            const debugPanel = document.getElementById('debug-panel');
-            const closeDebugButton = document.getElementById('close-debug');
             const helpToggle = document.getElementById('help-toggle');
             const helpModal = document.getElementById('help-modal');
             const closeHelpButton = document.getElementById('close-help');
@@ -1865,14 +1845,6 @@ centerY = (startPos.y + currentPos.y) / 2;
             });
 
             projectUploadInput.addEventListener('change', loadProject);
-
-            debugToggle.addEventListener('click', () => {
-                debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
-            });
-
-            closeDebugButton.addEventListener('click', () => {
-                debugPanel.style.display = 'none';
-            });
 
             helpToggle.addEventListener('click', () => {
                 helpModal.style.display = helpModal.style.display === 'block' ? 'none' : 'block';
