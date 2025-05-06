@@ -17,11 +17,14 @@
             --gradient: linear-gradient(90deg, #e37800, #ffbf40);
             --shadow-glow: 0 0 15px rgba(255, 191, 64, 0.6);
             --error-color: #ff5555;
+            --success-color: #55ff55;
             --bg-color: #1a1a1a;
             --text-color: #fff;
             --panel-bg: #222;
             --high-contrast-bg: #000;
             --high-contrast-text: #fff;
+            --button-hover-bg: #e37800;
+            --button-active-bg: #ffbf40;
         }
 
         [data-theme="light"] {
@@ -30,6 +33,8 @@
             --panel-bg: #ddd;
             --high-contrast-bg: #fff;
             --high-contrast-text: #000;
+            --button-hover-bg: #ffbf40;
+            --button-active-bg: #e37800;
         }
 
         [data-high-contrast="true"] {
@@ -42,10 +47,12 @@
 
         body {
             margin: 0;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg-color);
             color: var(--text-color);
             transition: background-color 0.3s ease, color 0.3s ease;
+            overscroll-behavior: none; /* Prevent browser pull-to-refresh behavior */
+            touch-action: manipulation; /* Remove 300ms delay on mobile */
         }
 
         #app {
@@ -87,6 +94,17 @@
             100% { transform: translate(0); text-shadow: 0 0 5px var(--glow-color); }
         }
 
+        /* Fallback for browsers that don't support animations */
+        @supports not (animation: glow 2s ease-in-out infinite alternate) {
+            #header h1 {
+                color: var(--primary-color);
+                text-shadow: none;
+            }
+            #tagline {
+                text-shadow: none;
+            }
+        }
+
         section {
             background: var(--panel-bg);
             border-radius: 8px;
@@ -112,13 +130,18 @@
             border-color: var(--error-color);
         }
 
+        #upload-area.dragging {
+            border-color: var(--primary-color);
+            background-color: rgba(227, 120, 0, 0.1);
+        }
+
         #error-message {
             color: var(--error-color);
             margin-top: 10px;
         }
 
         #confirmation-message {
-            color: #0f0;
+            color: var(--success-color);
             margin-top: 10px;
         }
 
@@ -197,6 +220,12 @@
             box-shadow: var(--shadow-glow);
         }
 
+        /* Fallback for browsers that don't support appearance property */
+        input[type="range"].unstyled {
+            height: auto;
+            background: none;
+        }
+
         input[type="text"],
         input[type="color"],
         select {
@@ -206,6 +235,13 @@
             background: #333;
             color: var(--text-color);
             transition: border-color 0.3s ease;
+        }
+
+        [data-theme="light"] input[type="text"],
+        [data-theme="light"] input[type="color"],
+        [data-theme="light"] select {
+            background: #fff;
+            color: #000;
         }
 
         input:focus,
@@ -223,6 +259,8 @@
             cursor: pointer;
             font-weight: 600;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
         }
 
         .button:hover {
@@ -239,6 +277,33 @@
             color: #000;
         }
 
+        /* Ripple effect for buttons */
+        .button .ripple {
+            position: absolute;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        }
+
+        @keyframes ripple {
+            to {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        /* Fallback for browsers that don't support animations */
+        @supports not (animation: ripple 0.6s linear) {
+            .button:hover {
+                background: var(--button-hover-bg);
+            }
+            .button:active {
+                background: var(--button-active-bg);
+            }
+        }
+
         #drawing-tools {
             display: flex;
             gap: 10px;
@@ -250,10 +315,18 @@
             display: inline-block;
         }
 
+        .canvas-container {
+            position: relative;
+            overflow: hidden;
+            max-width: 100%;
+            touch-action: none; /* Prevents default touch actions */
+        }
+
         #drawing-canvas,
         #color-wheel {
             border: 1px solid #888;
             border-radius: 4px;
+            touch-action: none;
         }
 
         #grid {
@@ -275,10 +348,32 @@
             border-radius: 4px;
             cursor: pointer;
             transition: transform 0.2s ease;
+            position: relative;
         }
 
         .swatch:hover {
             transform: scale(1.2);
+        }
+
+        .swatch-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+
+        .swatch:hover .swatch-tooltip {
+            opacity: 1;
         }
 
         #preview-window {
@@ -301,7 +396,8 @@
         }
 
         #debug-panel,
-        #help-modal {
+        #help-modal,
+        #autosave-notification {
             position: fixed;
             top: 20px;
             right: 20px;
@@ -318,6 +414,21 @@
             right: auto;
             left: 50%;
             transform: translateX(-50%);
+        }
+
+        #autosave-notification {
+            top: auto;
+            bottom: 20px;
+            padding: 10px 20px;
+            background: rgba(34, 34, 34, 0.9);
+            animation: fadeInOut 2s forwards;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            10% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
         }
 
         #tooltip {
@@ -341,6 +452,50 @@
             z-index: 100;
         }
 
+        /* Touch Controls for Mobile */
+        #mobile-controls {
+            display: none;
+            margin-top: 10px;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #pinch-zoom-controls,
+        #touch-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        /* Error message styling */
+        .error-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--error-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 9999;
+            animation: fadeInOut 4s forwards;
+        }
+
+        .success-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--success-color);
+            color: black;
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 9999;
+            animation: fadeInOut 2s forwards;
+        }
+
         @media (max-width: 768px) {
             #app {
                 padding: 10px;
@@ -355,6 +510,10 @@
                 width: 100% !important;
                 height: auto !important;
             }
+
+            #mobile-controls {
+                display: flex;
+            }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -365,6 +524,27 @@
                 animation: none;
                 transition: none;
             }
+        }
+
+        /* Loader animation */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Accessible focus styles */
+        *:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
         }
     </style>
 </head>
@@ -384,7 +564,7 @@
                 <div id="progress-bar" class="hidden">
                     <div id="progress-fill"></div>
                 </div>
-                <p id="loading-message" class="hidden">Processing...</p>
+                <p id="loading-message" class="hidden">Processing... <span class="loader"></span></p>
                 <p id="error-message" class="hidden"></p>
                 <p id="confirmation-message" class="hidden">File processed successfully!</p>
                 <img id="thumbnail-preview" class="hidden" alt="Uploaded image thumbnail" />
@@ -419,17 +599,16 @@
                 </div>
                 <div class="control-group">
                     <label for="hex-input">HEX</label>
-                    <input type="text" id="hex-input" maxlength="7" value="#e37800" aria-label="HEX color input" />
+                    <input type="text" id="hex-input" maxlength="7" value="#e37800" aria-label="HEX color input" pattern="^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$" />
                 </div>
                 <div class="control-group">
                     <label for="rgb-input">RGB</label>
-                    <input type="text" id="rgb-input" value="227,120,0" aria-label="RGB color input" />
+                    <input type="text" id="rgb-input" value="227,120,0" aria-label="RGB color input" pattern="^\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*$" />
                 </div>
                 <div class="control-group">
                     <label for="hsl-input">HSL</label>
-                    <input type="text" id="hsl-input" value="32,100%,44%" aria-label="HSL color input" />
-
-</div>
+                    <input type="text" id="hsl-input" value="32,100%,44%" aria-label="HSL color input" pattern="^\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*$" />
+                </div>
                 <div class="control-group">
                     <label for="native-picker">System Color Picker</label>
                     <input type="color" id="native-picker" value="#e37800" aria-label="System color picker" />
@@ -459,21 +638,33 @@
         </section>
 
         <section id="canvas-section" class="hidden">
-            <div style="position: relative;">
+            <div class="canvas-container">
                 <svg id="grid" class="hidden"></svg>
                 <canvas id="drawing-canvas" width="800" height="600"></canvas>
                 <input type="text" id="text-input" class="hidden" placeholder="Enter text" />
+            </div>
+            <div id="mobile-controls">
+                <div id="pinch-zoom-controls">
+                    <button id="zoom-in" class="button" title="Zoom In">Zoom In</button>
+                    <button id="zoom-out" class="button" title="Zoom Out">Zoom Out</button>
+                    <button id="reset-zoom" class="button" title="Reset Zoom">Reset View</button>
+                </div>
+                <div id="touch-controls">
+                    <button id="toggle-touch-drawing" class="button" title="Toggle Touch Drawing">Touch Drawing</button>
+                    <button id="touch-precision" class="button" title="Precision Mode">Precision Mode</button>
+                </div>
             </div>
             <div style="margin-top: 10px;">
                 <label for="snap-grid">Snap to Grid</label>
                 <input type="checkbox" id="snap-grid" checked />
             </div>
         </section>
+
         <section id="export-section" class="hidden">
             <div class="controls-grid">
                 <div class="control-group">
                     <label for="filename">Filename</label>
-                    <input type="text" id="filename" value="vectorized" aria-label="Export filename" />
+                    <input type="text" id="filename" value="vectorized" aria-label="Export filename" pattern="^[a-zA-Z0-9_-]+$" />
                 </div>
                 <div class="control-group">
                     <button id="export-svg" class="button">Export as SVG</button>
@@ -492,11 +683,11 @@
             <div class="controls-grid">
                 <div class="control-group">
                     <label for="fill-color-input">Fill Color (HEX)</label>
-                    <input type="text" id="fill-color-input" maxlength="7" aria-label="Object fill color" />
+                    <input type="text" id="fill-color-input" maxlength="7" aria-label="Object fill color" pattern="^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$" />
                 </div>
                 <div class="control-group">
                     <label for="stroke-color-input">Stroke Color (HEX)</label>
-                    <input type="text" id="stroke-color-input" maxlength="7" aria-label="Object stroke color" />
+                    <input type="text" id="stroke-color-input" maxlength="7" aria-label="Object stroke color" pattern="^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$" />
                 </div>
                 <div class="control-group">
                     <label for="object-opacity-slider">Opacity</label>
@@ -535,6 +726,9 @@
                 <div class="control-group">
                     <button id="debug-toggle" class="button">Toggle Debug</button>
                     <button id="help-toggle" class="button">Help</button>
+                    <label for="autosave-toggle">
+                        <input type="checkbox" id="autosave-toggle" checked /> Enable Autosave
+                    </label>
                 </div>
             </div>
         </section>
@@ -552,564 +746,1525 @@
             <p><strong>Color:</strong> Pick colors via wheel, sliders, or inputs (HEX/RGB/HSL).</p>
             <p><strong>Export:</strong> Save as SVG, PNG, or JSON project file.</p>
             <p><strong>Shortcuts:</strong> Undo (Ctrl+Z), Redo (Ctrl+Y), Escape to deselect.</p>
+            <p><strong>Mobile:</strong> Use pinch gestures to zoom, precision mode for detailed work.</p>
             <button id="close-help" class="button">Close</button>
         </div>
+        <div id="autosave-notification" style="display: none;">Project autosaved</div>
         <div id="tooltip" style="display: none;"></div>
     </div>
+<script nonce="doppleit">
+    // Configuration constants
+    const CANVAS_WIDTH = 800;
+    const CANVAS_HEIGHT = 600;
+    const GRID_SIZE = 10;
+    const VALID_TYPES = ['image/jpeg', 'image/png', 'image/svg+xml'];
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    const SWATCH_LIMIT = 10;
+    const AUTOSAVE_INTERVAL = 30000; // 30 seconds
+    const VIEWPORT_PADDING = 100; // Pixels to add around the viewport for culling
 
-    <script nonce="doppleit">
-        const CANVAS_WIDTH = 800;
-        const CANVAS_HEIGHT = 600;
-        const GRID_SIZE = 10;
-        const VALID_TYPES = ['image/jpeg', 'image/png', 'image/svg+xml'];
-        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-        const SWATCH_LIMIT = 10;
+    // State variables
+    let currentTool = 'pen';
+    let isDrawing = false;
+    let currentPath = [];
+    let startPos = null;
+    let currentPos = null;
+    let selectedObject = null;
+    let isColorDragging = false;
+    let snapToGridEnabled = true;
+    let redrawTimeout;
+    let autosaveInterval;
+    let isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    let isTouchEnabled = false;
+    let zoomLevel = 1;
+    let panOffset = { x: 0, y: 0 };
+    let lastPinchDistance = 0;
+    let isPrecisionMode = false;
 
-        let currentTool = 'pen';
-        let isDrawing = false;
-        let currentPath = [];
-        let startPos = null;
-        let currentPos = null;
-        let selectedObject = null;
-        let isColorDragging = false;
-        let snapToGridEnabled = true;
-        let redrawTimeout;
+    let currentColor = { h: 32, s: 100, l: 44, a: 1 };
+    let settings = JSON.parse(localStorage.getItem('settings')) || { theme: 'dark', highContrast: false, autosave: true };
+    let swatches = JSON.parse(localStorage.getItem('swatches')) || [];
+    let undoStack = [JSON.stringify([{ objects: [], visible: true, locked: false, name: 'Layer 1' }])];
+    let redoStack = [];
+    let activeWebWorker = null;
 
-        let currentColor = { h: 32, s: 100, l: 44, a: 1 };
-        let settings = JSON.parse(localStorage.getItem('settings')) || { theme: 'dark', highContrast: false };
-        let swatches = JSON.parse(localStorage.getItem('swatches')) || [];
-        let undoStack = [JSON.stringify([{ objects: [], visible: true, locked: false, name: 'Layer 1' }])];
-        let redoStack = [];
+    // Feature detection
+    const supportsTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const supportsPointerEvents = !!window.PointerEvent;
+    const supportsPassiveListeners = (function() {
+        let supportsPassive = false;
+        try {
+            const opts = Object.defineProperty({}, 'passive', {
+                get: function() {
+                    supportsPassive = true;
+                    return true;
+                }
+            });
+            window.addEventListener('testPassive', null, opts);
+            window.removeEventListener('testPassive', null, opts);
+        } catch (e) {}
+        return supportsPassive;
+    })();
 
-        class LayerManager {
-            constructor() {
-                this.layers = [{ objects: [], visible: true, locked: false, name: 'Layer 1' }];
-                this.currentLayerIndex = 0;
+    // Setup browser fallbacks
+    function setupCompatibilityFallbacks() {
+        // Check for requestAnimationFrame support
+        if (!window.requestAnimationFrame) {
+            window.requestAnimationFrame = function(callback) {
+                return window.setTimeout(callback, 1000 / 60);
+            };
+        }
+        
+        // Check for cancelAnimationFrame support
+        if (!window.cancelAnimationFrame) {
+            window.cancelAnimationFrame = function(id) {
+                clearTimeout(id);
+            };
+        }
+        
+        // Detect if browser supports input[type="range"]
+        const rangeInputs = document.querySelectorAll('input[type="range"]');
+        if (rangeInputs.length > 0) {
+            const testRange = document.createElement('input');
+            testRange.setAttribute('type', 'range');
+            if (testRange.type !== 'range') {
+                rangeInputs.forEach(input => {
+                    input.classList.add('unstyled');
+                });
             }
-
-            addLayer() {
-                this.layers.push({ objects: [], visible: true, locked: false, name: `Layer ${this.layers.length + 1}` });
-                this.currentLayerIndex = this.layers.length - 1;
-                updateLayerSelect();
-                drawCanvas();
+        }
+        
+        // Detect if browser supports gradients for buttons
+        const buttonsWithGradient = document.querySelectorAll('.button');
+        if (buttonsWithGradient.length > 0) {
+            const testDiv = document.createElement('div');
+            testDiv.style.backgroundImage = 'linear-gradient(90deg, #e37800, #ffbf40)';
+            if (!testDiv.style.backgroundImage) {
+                buttonsWithGradient.forEach(button => {
+                    button.style.background = '#e37800';
+                });
             }
+        }
 
-            setActiveLayer(index) {
-                this.currentLayerIndex = index;
-                updateLayerSelect();
-                drawCanvas();
-            }
+        // Detect older browsers and apply compatibility class if needed
+        const isIE = !!document.documentMode;
+        const isEdgeHTML = !isIE && !!window.StyleMedia;
+        if (isIE || isEdgeHTML) {
+            document.body.classList.add('legacy-browser');
+        }
+    }
 
-            renameLayer(index, name) {
-                this.layers[index].name = name;
-                updateLayerSelect();
-            }
-
-            toggleVisibility(index) {
-                this.layers[index].visible = !this.layers[index].visible;
-                updateLayerSelect();
-                drawCanvas();
-            }
-
-            toggleLock(index) {
-                this.layers[index].locked = !this.layers[index].locked;
-                updateLayerSelect();
-                drawCanvas();
-            }
-
-            addObject(obj) {
-                if (!this.layers[this.currentLayerIndex].locked) {
-                    this.layers[this.currentLayerIndex].objects.push(obj);
-                    saveState();
-                    drawCanvas();
+    // Security-related utilities
+    const securityUtils = {
+        sanitizeHtml: function(html) {
+            const temp = document.createElement('div');
+            temp.textContent = html;
+            return temp.innerHTML;
+        },
+        
+        sanitizeSvg: function(svgString) {
+            // Create a DOM parser
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(svgString, 'image/svg+xml');
+            
+            // Remove potentially dangerous elements and attributes
+            const dangerousElements = ['script', 'foreignObject', 'use', 'image'];
+            const dangerousAttrs = ['onerror', 'onload', 'onclick', 'onmouseover', 'xlink:href'];
+            
+            // Remove dangerous elements
+            dangerousElements.forEach(tag => {
+                const elements = doc.getElementsByTagName(tag);
+                for (let i = elements.length - 1; i >= 0; i--) {
+                    elements[i].parentNode.removeChild(elements[i]);
+                }
+            });
+            
+            // Remove dangerous attributes from all elements
+            const allElements = doc.getElementsByTagName('*');
+            for (let i = 0; i < allElements.length; i++) {
+                const element = allElements[i];
+                dangerousAttrs.forEach(attr => {
+                    if (element.hasAttribute(attr)) {
+                        element.removeAttribute(attr);
+                    }
+                });
+                
+                // Check for JavaScript in href attributes
+                if (element.hasAttribute('href') && element.getAttribute('href').toLowerCase().startsWith('javascript:')) {
+                    element.removeAttribute('href');
                 }
             }
+            
+            // Serialize back to string
+            const serializer = new XMLSerializer();
+            return serializer.serializeToString(doc);
+        },
+        
+        validateInput: function(input, pattern) {
+            if (!pattern) return true;
+            const regex = new RegExp(pattern);
+            return regex.test(input);
+        },
+        
+        sanitizeFilename: function(filename) {
+            // Replace potentially dangerous characters
+            return filename.replace(/[^a-zA-Z0-9_-]/g, '_');
+        },
+        
+        validateFile: function(file) {
+            if (!file) {
+                return { valid: false, error: 'No file provided.' };
+            }
+            
+            // Check file type
+            if (!VALID_TYPES.includes(file.type)) {
+                return { valid: false, error: 'Invalid file type. Only JPG, PNG, and SVG are allowed.' };
+            }
+            
+            // Check file size
+            if (file.size > MAX_FILE_SIZE) {
+                return { valid: false, error: `File size exceeds the limit of ${MAX_FILE_SIZE / 1024 / 1024}MB.` };
+            }
+            
+            return { valid: true };
+        }
+    };
 
-            updateObject(index, obj) {
+    // Layer management
+    class LayerManager {
+        constructor() {
+            this.layers = [{ objects: [], visible: true, locked: false, name: 'Layer 1' }];
+            this.currentLayerIndex = 0;
+        }
+
+        addLayer() {
+            this.layers.push({ objects: [], visible: true, locked: false, name: `Layer ${this.layers.length + 1}` });
+            this.currentLayerIndex = this.layers.length - 1;
+            updateLayerSelect();
+            drawCanvas();
+        }
+
+        setActiveLayer(index) {
+            this.currentLayerIndex = index;
+            updateLayerSelect();
+            drawCanvas();
+        }
+
+        renameLayer(index, name) {
+            // Sanitize the name
+            const sanitizedName = securityUtils.sanitizeHtml(name);
+            this.layers[index].name = sanitizedName;
+            updateLayerSelect();
+        }
+
+        toggleVisibility(index) {
+            this.layers[index].visible = !this.layers[index].visible;
+            updateLayerSelect();
+            drawCanvas();
+        }
+
+        toggleLock(index) {
+            this.layers[index].locked = !this.layers[index].locked;
+            updateLayerSelect();
+            drawCanvas();
+        }
+
+        addObject(obj) {
+            if (!this.layers[this.currentLayerIndex].locked) {
+                this.layers[this.currentLayerIndex].objects.push(obj);
+                saveState();
+                drawCanvas();
+                
+                // Trigger autosave
+                if (settings.autosave) {
+                    clearTimeout(autosaveTimeout);
+                    autosaveTimeout = setTimeout(autoSaveProject, 2000);
+                }
+            } else {
+                showError("Can't add object to locked layer");
+            }
+        }
+
+        updateObject(index, obj) {
+            if (!this.layers[this.currentLayerIndex].locked) {
                 this.layers[this.currentLayerIndex].objects[index] = obj;
                 saveState();
                 drawCanvas();
+                
+                // Trigger autosave
+                if (settings.autosave) {
+                    clearTimeout(autosaveTimeout);
+                    autosaveTimeout = setTimeout(autoSaveProject, 2000);
+                }
+            } else {
+                showError("Can't update object in locked layer");
             }
+        }
 
-            deleteObject(index) {
+        deleteObject(index) {
+            if (!this.layers[this.currentLayerIndex].locked) {
                 this.layers[this.currentLayerIndex].objects.splice(index, 1);
                 saveState();
                 drawCanvas();
-            }
-
-            getActiveObjects() {
-                return this.layers[this.currentLayerIndex].objects;
-            }
-
-            getVisibleObjects() {
-                return this.layers
-                    .filter(layer => layer.visible)
-                    .flatMap(layer => layer.objects);
-            }
-        }
-
-        let layerManager = new LayerManager();
-
-        function drawColorWheel(ctx) {
-            const centerX = 50;
-            const centerY = 50;
-            const radius = 50;
-            for (let angle = 0; angle < 360; angle += 1) {
-                for (let r = 0; r < radius; r += 1) {
-                    const rad = (angle * Math.PI) / 180;
-                    const x = centerX + r * Math.cos(rad);
-                    const y = centerY + r * Math.sin(rad);
-                    ctx.fillStyle = `hsl(${angle}, ${(r / radius) * 100}%, ${currentColor.l}%)`;
-                    ctx.fillRect(x, y, 1, 1);
+                
+                // Trigger autosave
+                if (settings.autosave) {
+                    clearTimeout(autosaveTimeout);
+                    autosaveTimeout = setTimeout(autoSaveProject, 2000);
                 }
-            }
-        }
-
-        function hslToRgb(h, s, l) {
-            s /= 100;
-            l /= 100;
-            const c = (1 - Math.abs(2 * l - 1)) * s;
-            const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-            const m = l - c / 2;
-            let r = 0, g = 0, b = 0;
-
-            if (0 <= h && h < 60) { r = c; g = x; b = 0; }
-            else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
-            else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
-            else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
-            else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
-            else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
-
-            r = Math.round((r + m) * 255);
-            g = Math.round((g + m) * 255);
-            b = Math.round((b + m) * 255);
-
-            return { r, g, b };
-        }
-
-        function rgbToHsl(r, g, b) {
-            r /= 255; g /= 255; b /= 255;
-            const max = Math.max(r, g, b);
-            const min = Math.min(r, g, b);
-            let h, s, l = (max + min) / 2;
-
-            if (max === min) {
-                h = s = 0;
             } else {
-                const d = max - min;
-                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                switch (max) {
-                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                    case g: h = (b - r) / d + 2; break;
-                    case b: h = (r - g) / d + 4; break;
-                }
-                h /= 6;
-            }
-
-            return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
-        }
-
-        function rgbToHslObject(r, g, b) {
-            const [h, s, l] = rgbToHsl(r, g, b);
-            return { h, s, l };
-        }
-
-        function hslToRgbString(h, s, l, a = 1) {
-            const { r, g, b } = hslToRgb(h, s, l);
-            return `rgba(<span class="math-inline">\{r\},</span>{g},<span class="math-inline">\{b\},</span>{a})`;
-        }
-
-        function hexToRgb(hex) {
-            hex = hex.replace('#', '');
-            if (hex.length === 3) {
-                hex = hex.split('').map(c => c + c).join('');
-            }
-            const r = parseInt(hex.substring(0, 2), 16);
-            const g = parseInt(hex.substring(2, 4), 16);
-            const b = parseInt(hex.substring(4, 6), 16);
-            return { r, g, b };
-        }
-
-        function rgbToHex(r, g, b) {
-            return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
-        }
-
-        function hexToHsl(hex) {
-            const { r, g, b } = hexToRgb(hex);
-            return rgbToHslObject(r, g, b);
-        }
-
-        function hslToHex(h, s, l) {
-            const { r, g, b } = hslToRgb(h, s, l);
-            return rgbToHex(r, g, b);
-        }
-
-        function updateColorInputs() {
-            const { r, g, b } = hslToRgb(currentColor.h, currentColor.s, currentColor.l);
-            document.getElementById('hex-input').value = rgbToHex(r, g, b);
-            document.getElementById('rgb-input').value = `<span class="math-inline">\{r\},</span>{g},${b}`;
-            document.getElementById('hsl-input').value = `<span class="math-inline">\{Math\.round\(currentColor\.h\)\},</span>{Math.round(currentColor.s)}%,${Math.round(currentColor.l)}%`;
-            document.getElementById('native-picker').value = rgbToHex(r, g, b);
-            document.getElementById('lightness-slider').value = currentColor.l;
-            document.getElementById('lightness-slider').setAttribute('aria-valuenow', currentColor.l);
-            document.getElementById('opacity-slider').value = currentColor.a;
-            document.getElementById('opacity-slider').setAttribute('aria-valuenow', currentColor.a);
-            drawColorWheel(document.getElementById('color-wheel').getContext('2d'));
-        }
-
-        function updatePropertiesPanel() {
-            const panel = document.getElementById('properties-section');
-            if (selectedObject) {
-                panel.classList.remove('hidden');
-                document.getElementById('fill-color-input').value = selectedObject.fill.includes('url') ? '#000000' : selectedObject.fill;
-                document.getElementById('stroke-color-input').value = selectedObject.stroke;
-                document.getElementById('object-opacity-slider').value = selectedObject.opacity ||
-1;
-                document.getElementById('object-opacity-slider').setAttribute('aria-valuenow', selectedObject.opacity || 1);
-                document.getElementById('object-stroke-width-slider').value = selectedObject.strokeWidth || 1;
-                document.getElementById('object-stroke-width-slider').setAttribute('aria-valuenow', selectedObject.strokeWidth || 1);
-            } else {
-                panel.classList.add('hidden');
+                showError("Can't delete object from locked layer");
             }
         }
 
-        async function loadImage(file) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = reject;
-                img.src = URL.createObjectURL(file);
-            });
+        getActiveObjects() {
+            return this.layers[this.currentLayerIndex].objects;
         }
 
-        function snapToGrid(value) {
-            if (snapToGridEnabled) {
-                return Math.round(value / GRID_SIZE) * GRID_SIZE;
-            }
-            return value;
+        getVisibleObjects() {
+            return this.layers
+                .filter(layer => layer.visible)
+                .flatMap(layer => layer.objects);
         }
-
-        function drawCanvas() {
-            console.log('Drawing canvas with objects:', layerManager.getVisibleObjects());
-            cancelAnimationFrame(redrawTimeout);
-            redrawTimeout = requestAnimationFrame(() => {
-                const ctx = document.getElementById('drawing-canvas').getContext('2d');
-                ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-                layerManager.getVisibleObjects().forEach(obj => {
-                    ctx.globalAlpha = obj.opacity || 1;
-                    ctx.fillStyle = document.getElementById('fill-toggle').checked ? obj.fill : 'transparent';
-                    ctx.strokeStyle = obj.stroke;
-                    ctx.lineWidth = Math.max(0.1, obj.strokeWidth);
-                    ctx.lineCap = 'round';
-                    ctx.lineJoin = 'round';
-                    if (obj.strokeStyle === 'dashed') {
-                        ctx.setLineDash([5, 5]);
-                    } else if (obj.strokeStyle === 'dotted') {
-                        ctx.setLineDash([2, 2]);
-                    } else {
-                        ctx.setLineDash([]);
-                    }
-
+        
+        // Get only objects that are in the viewport (for culling)
+        getVisibleObjectsInViewport() {
+            const canvas = document.getElementById('drawing-canvas');
+            const viewportRect = {
+                left: -panOffset.x / zoomLevel - VIEWPORT_PADDING,
+                top: -panOffset.y / zoomLevel - VIEWPORT_PADDING,
+                right: (-panOffset.x + canvas.width) / zoomLevel + VIEWPORT_PADDING,
+                bottom: (-panOffset.y + canvas.height) / zoomLevel + VIEWPORT_PADDING
+            };
+            
+            return this.layers
+                .filter(layer => layer.visible)
+                .flatMap(layer => layer.objects.filter(obj => {
+                    // Determine if object is in viewport
                     switch (obj.type) {
                         case 'path':
-                            ctx.beginPath();
-                            obj.points.forEach((p, i) => {
-                                const x = snapToGrid(p.x);
-                                const y = snapToGrid(p.y);
-                                if (i === 0) {
-                                    ctx.moveTo(x, y);
-                                } else {
-                                    ctx.lineTo(x, y);
-                                }
-                            });
-                            ctx.stroke();
-                            if (document.getElementById('fill-toggle').checked && obj.fill !== 'transparent') {
-                                ctx.fill();
-                            }
-                            break;
+                            return obj.points.some(p => 
+                                p.x >= viewportRect.left && 
+                                p.x <= viewportRect.right && 
+                                p.y >= viewportRect.top && 
+                                p.y <= viewportRect.bottom
+                            );
                         case 'rect':
-                            const x = snapToGrid(Math.min(obj.x, obj.x + obj.width));
-                            const y = snapToGrid(Math.min(obj.y, obj.y + obj.height));
-                            const width = snapToGrid(Math.abs(obj.width));
-                            const height = snapToGrid(Math.abs(obj.height));
-                            ctx.fillRect(x, y, width, height);
-                            ctx.strokeRect(x, y, width, height);
-                            break;
+                            const x = Math.min(obj.x, obj.x + obj.width);
+                            const y = Math.min(obj.y, obj.y + obj.height);
+                            const width = Math.abs(obj.width);
+                            const height = Math.abs(obj.height);
+                            return (
+                                x + width >= viewportRect.left &&
+                                x <= viewportRect.right &&
+                                y + height >= viewportRect.top &&
+                                y <= viewportRect.bottom
+                            );
                         case 'circle':
-                            const cx = snapToGrid(obj.cx);
-                            const cy = snapToGrid(obj.cy);
-                            const r = snapToGrid(obj.r);
-                            ctx.beginPath();
-                            ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-                            ctx.fill();
-                            ctx.stroke();
-                            break;
+                            return (
+                                obj.cx + obj.r >= viewportRect.left &&
+                                obj.cx - obj.r <= viewportRect.right &&
+                                obj.cy + obj.r >= viewportRect.top &&
+                                obj.cy - obj.r <= viewportRect.bottom
+                            );
                         case 'text':
-                            ctx.font = `${obj.size || 16}px Inter`;
-                            ctx.textAlign = 'left';
-                            ctx.textBaseline = 'top';
-                            ctx.fillText(obj.text, snapToGrid(obj.x), snapToGrid(obj.y));
-                            ctx.strokeText(obj.text, snapToGrid(obj.x), snapToGrid(obj.y));
-                            break;
+                            return (
+                                obj.x >= viewportRect.left &&
+                                obj.x <= viewportRect.right &&
+                                obj.y >= viewportRect.top &&
+                                obj.y <= viewportRect.bottom
+                            );
                         case 'image':
-                            if (obj.image) {
-                                ctx.drawImage(obj.image, snapToGrid(obj.x), snapToGrid(obj.y), snapToGrid(obj.width), snapToGrid(obj.height));
-                            }
-                            break;
+                            return (
+                                obj.x + obj.width >= viewportRect.left &&
+                                obj.x <= viewportRect.right &&
+                                obj.y + obj.height >= viewportRect.top &&
+                                obj.y <= viewportRect.bottom
+                            );
+                        default:
+                            return true;
                     }
-                });
+                }));
+        }
+    }
 
-                if (selectedObject) {
-                    ctx.globalAlpha = 1;
-                    ctx.strokeStyle = '#00f';
-                    ctx.lineWidth = 2;
+    let layerManager = new LayerManager();
+    let autosaveTimeout;
+
+    // Web worker for image processing
+    function createImageProcessingWorker() {
+        // Create a blob containing the worker code
+        const workerCode = `
+            self.onmessage = function(e) {
+                const { operation, imageData, options } = e.data;
+                
+                switch (operation) {
+                    case 'processImage':
+                        // Process image based on options
+                        const result = processImageData(imageData, options);
+                        self.postMessage({ status: 'success', result });
+                        break;
+                    
+                    case 'convertSvgToPng':
+                        // Convert SVG to PNG
+                        convertSvgToPng(imageData, options)
+                            .then(result => self.postMessage({ status: 'success', result }))
+                            .catch(error => self.postMessage({ status: 'error', error: error.message }));
+                        break;
+                    
+                    default:
+                        self.postMessage({ status: 'error', error: 'Unknown operation' });
+                }
+            };
+            
+            function processImageData(imageData, options) {
+                // Process the image data according to options
+                // This would include transformations, filtering, etc.
+                return imageData; // Placeholder for actual processing
+            }
+            
+            function convertSvgToPng(svgData, options) {
+                return new Promise((resolve, reject) => {
+                    // Conversion logic would go here
+                    // In a real implementation, this might create an offscreen canvas
+                    // For now, just return success
+                    resolve(svgData);
+                });
+            }
+        `;
+        
+        const blob = new Blob([workerCode], { type: 'application/javascript' });
+        const workerUrl = URL.createObjectURL(blob);
+        
+        // Create the worker
+        const worker = new Worker(workerUrl);
+        
+        // Clean up the URL when done
+        worker.addEventListener('error', () => URL.revokeObjectURL(workerUrl));
+        
+        return worker;
+    }
+
+    // Color conversion utilities
+    function drawColorWheel(ctx) {
+        const centerX = 50;
+        const centerY = 50;
+        const radius = 50;
+        for (let angle = 0; angle < 360; angle += 1) {
+            for (let r = 0; r < radius; r += 1) {
+                const rad = (angle * Math.PI) / 180;
+                const x = centerX + r * Math.cos(rad);
+                const y = centerY + r * Math.sin(rad);
+                ctx.fillStyle = `hsl(${angle}, ${(r / radius) * 100}%, ${currentColor.l}%)`;
+                ctx.fillRect(x, y, 1, 1);
+            }
+        }
+    }
+
+    function hslToRgb(h, s, l) {
+        h = Math.max(0, Math.min(360, h));
+        s = Math.max(0, Math.min(100, s)) / 100;
+        l = Math.max(0, Math.min(100, l)) / 100;
+        
+        const c = (1 - Math.abs(2 * l - 1)) * s;
+        const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+        const m = l - c / 2;
+        let r = 0, g = 0, b = 0;
+
+        if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+        else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+        else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+        else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+        else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+        else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
+
+        r = Math.round((r + m) * 255);
+        g = Math.round((g + m) * 255);
+        b = Math.round((b + m) * 255);
+
+        return { r, g, b };
+    }
+
+    function rgbToHsl(r, g, b) {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+
+        if (max === min) {
+            h = s = 0;
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+
+        return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+    }
+
+    function rgbToHslObject(r, g, b) {
+        const [h, s, l] = rgbToHsl(r, g, b);
+        return { h, s, l };
+    }
+
+    function hslToRgbString(h, s, l, a = 1) {
+        const { r, g, b } = hslToRgb(h, s, l);
+        return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function hexToRgb(hex) {
+        // Ensure hex has # prefix
+        hex = hex.startsWith('#') ? hex : '#' + hex;
+        
+        // Support shorthand (#rgb)
+        if (hex.length === 4) {
+            hex = '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+        }
+        
+        // Handle potential invalid hex
+        if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+            console.warn(`Invalid hex color: ${hex}, defaulting to black`);
+            return { r: 0, g: 0, b: 0 };
+        }
+        
+        const r = parseInt(hex.substring(1, 3), 16);
+        const g = parseInt(hex.substring(3, 5), 16);
+        const b = parseInt(hex.substring(5, 7), 16);
+        return { r, g, b };
+    }
+
+    function rgbToHex(r, g, b) {
+        r = Math.max(0, Math.min(255, r));
+        g = Math.max(0, Math.min(255, g));
+        b = Math.max(0, Math.min(255, b));
+        return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+    }
+
+    function hexToHsl(hex) {
+        const { r, g, b } = hexToRgb(hex);
+        return rgbToHslObject(r, g, b);
+    }
+
+    function hslToHex(h, s, l) {
+        const { r, g, b } = hslToRgb(h, s, l);
+        return rgbToHex(r, g, b);
+    }
+
+    // UI update functions
+    function updateColorInputs() {
+        const { r, g, b } = hslToRgb(currentColor.h, currentColor.s, currentColor.l);
+        document.getElementById('hex-input').value = rgbToHex(r, g, b);
+        document.getElementById('rgb-input').value = `${r},${g},${b}`;
+        document.getElementById('hsl-input').value = `${Math.round(currentColor.h)},${Math.round(currentColor.s)}%,${Math.round(currentColor.l)}%`;
+        document.getElementById('native-picker').value = rgbToHex(r, g, b);
+        document.getElementById('lightness-slider').value = currentColor.l;
+        document.getElementById('lightness-slider').setAttribute('aria-valuenow', currentColor.l);
+        document.getElementById('opacity-slider').value = currentColor.a;
+        document.getElementById('opacity-slider').setAttribute('aria-valuenow', currentColor.a);
+        document.getElementById('lightness-value').textContent = `${Math.round(currentColor.l)}%`;
+        document.getElementById('opacity-value').textContent = `${Math.round(currentColor.a * 100)}%`;
+        drawColorWheel(document.getElementById('color-wheel').getContext('2d'));
+    }
+
+    function updatePropertiesPanel() {
+        const panel = document.getElementById('properties-section');
+        if (selectedObject) {
+            panel.classList.remove('hidden');
+            document.getElementById('fill-color-input').value = selectedObject.fill.includes('url') ? '#000000' : selectedObject.fill;
+            document.getElementById('stroke-color-input').value = selectedObject.stroke;
+            document.getElementById('object-opacity-slider').value = selectedObject.opacity || 1;
+            document.getElementById('object-opacity-slider').setAttribute('aria-valuenow', selectedObject.opacity || 1);
+            document.getElementById('object-stroke-width-slider').value = selectedObject.strokeWidth || 1;
+            document.getElementById('object-stroke-width-slider').setAttribute('aria-valuenow', selectedObject.strokeWidth || 1);
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+
+    function updateLayerSelect() {
+        const layerSelect = document.getElementById('layer-select');
+        layerSelect.innerHTML = '';
+        layerManager.layers.forEach((layer, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = `${layer.name} ${layer.locked ? '🔒' : ''} ${layer.visible ? '👁️' : ''}`;
+            option.selected = index === layerManager.currentLayerIndex;
+            layerSelect.appendChild(option);
+        });
+    }
+
+    // Toast notification system
+    function showError(message, duration = 3000) {
+        const existingToast = document.querySelector('.error-toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+        
+        const toast = document.createElement('div');
+        toast.className = 'error-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, duration);
+    }
+    
+    function showSuccess(message, duration = 2000) {
+        const existingToast = document.querySelector('.success-toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+        
+        const toast = document.createElement('div');
+        toast.className = 'success-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, duration);
+    }
+
+    // Buttons ripple effect
+    function createRipple(event) {
+        const button = event.currentTarget;
+        const ripple = document.createElement('span');
+        const rect = button.getBoundingClientRect();
+        
+        const size = Math.max(rect.width, rect.height);
+        const x = event.clientX - rect.left - size / 2;
+        const y = event.clientY - rect.top - size / 2;
+        
+        ripple.className = 'ripple';
+        ripple.style.width = ripple.style.height = `${size}px`;
+        ripple.style.left = `${x}px`;
+        ripple.style.top = `${y}px`;
+        
+        button.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    }
+
+    // Autosave feature
+    function autoSaveProject() {
+        if (!settings.autosave) return;
+
+        try {
+            const projectData = {
+                layers: layerManager.layers,
+                settings: settings,
+                swatches: swatches,
+                currentColor: currentColor
+            };
+            const jsonString = JSON.stringify(projectData);
+            localStorage.setItem('doppleitVectorAutosave', jsonString);
+
+            // Show notification
+            const notification = document.getElementById('autosave-notification');
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 2000);
+        } catch (error) {
+            console.error('Autosave failed:', error);
+        }
+    }
+
+    function loadAutosavedProject() {
+        try {
+            const savedData = localStorage.getItem('doppleitVectorAutosave');
+            if (savedData) {
+                const projectData = JSON.parse(savedData);
+                layerManager.layers = projectData.layers.map(layerData => ({ ...layerData, objects: layerData.objects.map(o => ({ ...o })) }));
+                settings = projectData.settings || { theme: 'dark', highContrast: false, autosave: true };
+                swatches = projectData.swatches || [];
+                currentColor = projectData.currentColor || { h: 32, s: 100, l: 44, a: 1 };
+                
+                updateLayerSelect();
+                renderSwatches();
+                updateColorInputs();
+                document.getElementById('canvas-section').classList.remove('hidden');
+                document.getElementById('export-section').classList.remove('hidden');
+                
+                showSuccess('Autosaved project loaded');
+                return true;
+            }
+        } catch (error) {
+            console.error('Failed to load autosaved project:', error);
+            showError('Failed to load autosaved project');
+        }
+        return false;
+    }
+
+    // Load image helpers
+    async function loadImage(file) {
+        return new Promise((resolve, reject) => {
+            const fileValidation = securityUtils.validateFile(file);
+            if (!fileValidation.valid) {
+                reject(new Error(fileValidation.error));
+                return;
+            }
+
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error('Failed to load image'));
+            img.src = URL.createObjectURL(file);
+        });
+    }
+
+    // Grid and snap helpers
+    function snapToGrid(value) {
+        if (snapToGridEnabled) {
+            return Math.round(value / GRID_SIZE) * GRID_SIZE;
+        }
+        return value;
+    }
+
+    // Draw utilities
+    function drawCanvas() {
+        cancelAnimationFrame(redrawTimeout);
+        redrawTimeout = requestAnimationFrame(() => {
+            const canvas = document.getElementById('drawing-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Apply zoom and pan transformations
+            ctx.save();
+            ctx.translate(panOffset.x, panOffset.y);
+            ctx.scale(zoomLevel, zoomLevel);
+            
+            // Get only objects that are visible in the current viewport
+            const visibleObjects = settings.useCulling 
+                ? layerManager.getVisibleObjectsInViewport() 
+                : layerManager.getVisibleObjects();
+            
+            // Draw background grid first if enabled
+            if (snapToGridEnabled) {
+                drawGrid(ctx);
+            }
+            
+            // Draw objects
+            visibleObjects.forEach(obj => {
+                ctx.globalAlpha = obj.opacity || 1;
+                ctx.fillStyle = document.getElementById('fill-toggle').checked ? obj.fill : 'transparent';
+                ctx.strokeStyle = obj.stroke;
+                ctx.lineWidth = Math.max(0.1, obj.strokeWidth);
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                if (obj.strokeStyle === 'dashed') {
                     ctx.setLineDash([5, 5]);
-                    switch (selectedObject.type) {
-                        case 'path':
-                            ctx.beginPath();
-                            selectedObject.points.forEach((p, i) => {
-                                const x = snapToGrid(p.x);
-                                const y = snapToGrid(p.y);
-                                if (i === 0) {
-                                    ctx.moveTo(x, y);
-                                } else {
-                                    ctx.lineTo(x, y);
-                                }
-                            });
-                            ctx.stroke();
-                            break;
-                        case 'rect':
-                            const x = snapToGrid(Math.min(selectedObject.x, selectedObject.x + selectedObject.width));
-                            const y = snapToGrid(Math.min(selectedObject.y, selectedObject.y + selectedObject.height));
-                            const width = snapToGrid(Math.abs(selectedObject.width));
-                            const height = snapToGrid(Math.abs(selectedObject.height));
-                            ctx.strokeRect(x, y, width, height);
-                            break;
-                        case 'circle':
-                            const cx = snapToGrid(selectedObject.cx);
-                            const cy = snapToGrid(selectedObject.cy);
-                            const r = snapToGrid(selectedObject.r);
-                            ctx.beginPath();
-                            ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-                            ctx.stroke();
-                            break;
-                        case 'text':
-                            const textWidth = ctx.measureText(selectedObject.text).width;
-                            const sx = snapToGrid(selectedObject.x);
-                            const sy = snapToGrid(selectedObject.y);
-                            ctx.strokeRect(sx, sy, textWidth, selectedObject.size || 16);
-                            break;
-                        case 'image':
-                            ctx.strokeRect(snapToGrid(selectedObject.x), snapToGrid(selectedObject.y), snapToGrid(selectedObject.width), snapToGrid(selectedObject.height));
-                            break;
-                    }
+                } else if (obj.strokeStyle === 'dotted') {
+                    ctx.setLineDash([2, 2]);
+                } else {
                     ctx.setLineDash([]);
                 }
 
-                if (snapToGridEnabled) {
-                    drawGrid(ctx);
+                switch (obj.type) {
+                    case 'path':
+                        ctx.beginPath();
+                        obj.points.forEach((p, i) => {
+                            const x = snapToGrid(p.x);
+                            const y = snapToGrid(p.y);
+                            if (i === 0) {
+                                ctx.moveTo(x, y);
+                            } else {
+                                ctx.lineTo(x, y);
+                            }
+                        });
+                        ctx.stroke();
+                        if (document.getElementById('fill-toggle').checked && obj.fill !== 'transparent') {
+                            ctx.fill();
+                        }
+                        break;
+                    case 'rect':
+                        const x = snapToGrid(Math.min(obj.x, obj.x + obj.width));
+                        const y = snapToGrid(Math.min(obj.y, obj.y + obj.height));
+                        const width = snapToGrid(Math.abs(obj.width));
+                        const height = snapToGrid(Math.abs(obj.height));
+                        ctx.fillRect(x, y, width, height);
+                        ctx.strokeRect(x, y, width, height);
+                        break;
+                    case 'circle':
+                        const cx = snapToGrid(obj.cx);
+                        const cy = snapToGrid(obj.cy);
+                        const r = snapToGrid(obj.r);
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                    case 'text':
+                        ctx.font = `${obj.size || 16}px Inter`;
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'top';
+                        ctx.fillText(obj.text, snapToGrid(obj.x), snapToGrid(obj.y));
+                        ctx.strokeText(obj.text, snapToGrid(obj.x), snapToGrid(obj.y));
+                        break;
+                    case 'image':
+                        if (obj.image) {
+                            ctx.drawImage(obj.image, snapToGrid(obj.x), snapToGrid(obj.y), snapToGrid(obj.width), snapToGrid(obj.height));
+                        }
+                        break;
                 }
             });
-        }
 
-        function drawGrid(ctx) {
-            ctx.strokeStyle = '#555';
-            ctx.lineWidth = 0.5;
-            for (let i = GRID_SIZE; i < CANVAS_WIDTH; i += GRID_SIZE) {
+            // Draw selection outline if an object is selected
+            if (selectedObject) {
+                ctx.globalAlpha = 1;
+                ctx.strokeStyle = '#00f';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                switch (selectedObject.type) {
+                    case 'path':
+                        ctx.beginPath();
+                        selectedObject.points.forEach((p, i) => {
+                            const x = snapToGrid(p.x);
+                            const y = snapToGrid(p.y);
+                            if (i === 0) {
+                                ctx.moveTo(x, y);
+                            } else {
+                                ctx.lineTo(x, y);
+                            }
+                        });
+                        ctx.stroke();
+                        
+                        // Draw control points
+                        selectedObject.points.forEach(p => {
+                            ctx.fillStyle = '#00f';
+                            ctx.beginPath();
+                            ctx.arc(snapToGrid(p.x), snapToGrid(p.y), 4, 0, 2 * Math.PI);
+                            ctx.fill();
+                        });
+                        break;
+                        
+                    case 'rect':
+                        const x = snapToGrid(Math.min(selectedObject.x, selectedObject.x + selectedObject.width));
+                        const y = snapToGrid(Math.min(selectedObject.y, selectedObject.y + selectedObject.height));
+                        const width = snapToGrid(Math.abs(selectedObject.width));
+                        const height = snapToGrid(Math.abs(selectedObject.height));
+                        ctx.strokeRect(x, y, width, height);
+                        
+                        // Draw resize handles
+                        ctx.fillStyle = '#00f';
+                        [
+                            { x: x, y: y }, // top-left
+                            { x: x + width, y: y }, // top-right
+                            { x: x, y: y + height }, // bottom-left
+                            { x: x + width, y: y + height } // bottom-right
+                        ].forEach(p => {
+                            ctx.beginPath();
+                            ctx.arc(p.x, p.y, 4, 0, 2 * Math.PI);
+                            ctx.fill();
+                        });
+                        break;
+                        
+                    case 'circle':
+                        const cx = snapToGrid(selectedObject.cx);
+                        const cy = snapToGrid(selectedObject.cy);
+                        const r = snapToGrid(selectedObject.r);
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+                        ctx.stroke();
+                        
+                        // Draw center point and radius handle
+                        ctx.fillStyle = '#00f';
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, 4, 0, 2 * Math.PI);
+                        ctx.fill();
+                        
+                        ctx.beginPath();
+                        ctx.arc(cx + r, cy, 4, 0, 2 * Math.PI);
+                        ctx.fill();
+                        break;
+                        
+                    case 'text':
+                        ctx.font = `${selectedObject.size || 16}px Inter`;
+                        const textWidth = ctx.measureText(selectedObject.text).width;
+                        const sx = snapToGrid(selectedObject.x);
+                        const sy = snapToGrid(selectedObject.y);
+                        const textHeight = selectedObject.size || 16;
+                        ctx.strokeRect(sx, sy, textWidth, textHeight);
+                        
+                        // Draw edit handle
+                        ctx.fillStyle = '#00f';
+                        ctx.beginPath();
+                        ctx.arc(sx + textWidth, sy + textHeight / 2, 4, 0, 2 * Math.PI);
+                        ctx.fill();
+                        break;
+                        
+                    case 'image':
+                        const imgX = snapToGrid(selectedObject.x);
+                        const imgY = snapToGrid(selectedObject.y);
+                        const imgWidth = snapToGrid(selectedObject.width);
+                        const imgHeight = snapToGrid(selectedObject.height);
+                        ctx.strokeRect(imgX, imgY, imgWidth, imgHeight);
+                        
+                        // Draw resize handles
+                        ctx.fillStyle = '#00f';
+                        [
+                            { x: imgX, y: imgY }, // top-left
+                            { x: imgX + imgWidth, y: imgY }, // top-right
+                            { x: imgX, y: imgY + imgHeight }, // bottom-left
+                            { x: imgX + imgWidth, y: imgY + imgHeight } // bottom-right
+                        ].forEach(p => {
+                            ctx.beginPath();
+                            ctx.arc(p.x, p.y, 4, 0, 2 * Math.PI);
+                            ctx.fill();
+                        });
+                        break;
+                }
+                ctx.setLineDash([]);
+            }
+            
+            // Restore canvas state
+            ctx.restore();
+
+            // Draw precision mode indicator if enabled
+            if (isPrecisionMode) {
+                ctx.fillStyle = 'rgba(0, 0, 255, 0.2)';
                 ctx.beginPath();
-                ctx.moveTo(i, 0);
-                ctx.lineTo(i, CANVAS_HEIGHT);
+                ctx.arc(canvas.width / 2, canvas.height / 2, 50, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#00f';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(canvas.width / 2 - 10, canvas.height / 2);
+                ctx.lineTo(canvas.width / 2 + 10, canvas.height / 2);
+                ctx.moveTo(canvas.width / 2, canvas.height / 2 - 10);
+                ctx.lineTo(canvas.width / 2, canvas.height / 2 + 10);
                 ctx.stroke();
             }
-            for (let i = GRID_SIZE; i < CANVAS_HEIGHT; i += GRID_SIZE) {
-                ctx.beginPath();
-                ctx.moveTo(0, i);
-                ctx.lineTo(CANVAS_WIDTH, i);
-                ctx.stroke();
-            }
-        }
+        });
+    }
 
-        function saveState() {
-            undoStack.push(JSON.stringify(layerManager.layers.map(layer => ({ ...layer, objects: layer.objects.map(o => ({ ...o })) }))));
+    function drawGrid(ctx) {
+        const canvas = document.getElementById('drawing-canvas');
+        
+        // Calculate grid boundaries based on zoom and pan
+        const startX = Math.floor(-panOffset.x / (GRID_SIZE * zoomLevel)) * GRID_SIZE;
+        const startY = Math.floor(-panOffset.y / (GRID_SIZE * zoomLevel)) * GRID_SIZE;
+        const endX = Math.ceil((canvas.width - panOffset.x) / (GRID_SIZE * zoomLevel)) * GRID_SIZE;
+        const endY = Math.ceil((canvas.height - panOffset.y) / (GRID_SIZE * zoomLevel)) * GRID_SIZE;
+        
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 0.5;
+        
+        // Draw vertical lines
+        for (let x = startX; x <= endX; x += GRID_SIZE) {
+            ctx.beginPath();
+            ctx.moveTo(x, startY);
+            ctx.lineTo(x, endY);
+            ctx.stroke();
+        }
+        
+        // Draw horizontal lines
+        for (let y = startY; y <= endY; y += GRID_SIZE) {
+            ctx.beginPath();
+            ctx.moveTo(startX, y);
+            ctx.lineTo(endX, y);
+            ctx.stroke();
+        }
+    }
+
+    // State management
+    function saveState() {
+        try {
+            undoStack.push(JSON.stringify(layerManager.layers.map(layer => ({
+                ...layer,
+                objects: layer.objects.map(o => {
+                    // For SVG image objects, we need to handle the image element specially
+                    if (o.type === 'image' && o.image) {
+                        // Create a new object without the image property
+                        const objWithoutImage = { ...o };
+                        delete objWithoutImage.image;
+                        return objWithoutImage;
+                    }
+                    return { ...o };
+                })
+            }))));
             redoStack.length = 0;
             if (undoStack.length > 50) {
                 undoStack.shift();
             }
+        } catch (error) {
+            console.error('Error saving state:', error);
+            showError('Error saving state');
         }
+    }
 
-        function undo() {
+    function undo() {
+        try {
             if (undoStack.length > 1) {
                 redoStack.push(undoStack.pop());
                 const previousState = JSON.parse(undoStack[undoStack.length - 1]);
                 layerManager.layers = previousState.map(layerData => ({ ...layerData, objects: layerData.objects.map(o => ({ ...o })) }));
                 updateLayerSelect();
                 drawCanvas();
+            } else {
+                showError('Nothing to undo');
             }
+        } catch (error) {
+            console.error('Error during undo:', error);
+            showError('Error during undo operation');
         }
+    }
 
-        function redo() {
+    function redo() {
+        try {
             if (redoStack.length > 0) {
                 undoStack.push(redoStack.pop());
                 const nextState = JSON.parse(undoStack[undoStack.length - 1]);
                 layerManager.layers = nextState.map(layerData => ({ ...layerData, objects: layerData.objects.map(o => ({ ...o })) }));
                 updateLayerSelect();
                 drawCanvas();
+            } else {
+                showError('Nothing to redo');
             }
+        } catch (error) {
+            console.error('Error during redo:', error);
+            showError('Error during redo operation');
         }
-
-        function handleMouseDown(e) {
-            isDrawing = true;
-            startPos = { x: e.offsetX, y: e.offsetY };
-            currentPos = { ...startPos };
-            if (currentTool === 'pen') {
+    }
+</script>
+<script nonce="doppleit">
+    // Mouse and touch event handlers
+    function handleMouseDown(e) {
+        if (e.target !== document.getElementById('drawing-canvas')) return;
+        
+        isDrawing = true;
+        
+        // Get the canvas position accounting for zoom and pan
+        const canvas = document.getElementById('drawing-canvas');
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        const canvasX = (e.clientX - rect.left) * scaleX;
+        const canvasY = (e.clientY - rect.top) * scaleY;
+        
+        // Convert to world coordinates based on zoom and pan
+        const worldX = (canvasX - panOffset.x) / zoomLevel;
+        const worldY = (canvasY - panOffset.y) / zoomLevel;
+        
+        startPos = { x: worldX, y: worldY };
+        currentPos = { ...startPos };
+        
+        // Handle based on current tool
+        switch (currentTool) {
+            case 'pen':
                 currentPath = [{ ...startPos }];
-                layerManager.addObject({ type: 'path', points: currentPath, stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a), fill: 'transparent', strokeStyle: document.getElementById('stroke-style').value, strokeWidth: parseFloat(document.getElementById('stroke-width-slider').value) });
+                layerManager.addObject({ 
+                    type: 'path', 
+                    points: currentPath, 
+                    stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a), 
+                    fill: 'transparent', 
+                    strokeStyle: document.getElementById('stroke-style').value, 
+                    strokeWidth: parseFloat(document.getElementById('stroke-width-slider').value),
+                    opacity: parseFloat(document.getElementById('opacity-slider').value)
+                });
                 selectedObject = layerManager.getActiveObjects()[layerManager.getActiveObjects().length - 1];
-            } else if (currentTool === 'rect') {
-                layerManager.addObject({ type: 'rect', x: startPos.x, y: startPos.y, width: 0, height: 0, fill: document.getElementById('fill-toggle').checked ? hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a) : 'transparent', stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a), strokeStyle: document.getElementById('stroke-style').value, strokeWidth: parseFloat(document.getElementById('stroke-width-slider').value), opacity: parseFloat(document.getElementById('opacity-slider').value) });
+                break;
+                
+            case 'rect':
+                layerManager.addObject({ 
+                    type: 'rect', 
+                    x: startPos.x, 
+                    y: startPos.y, 
+                    width: 0, 
+                    height: 0, 
+                    fill: document.getElementById('fill-toggle').checked ? hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a) : 'transparent', 
+                    stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a), 
+                    strokeStyle: document.getElementById('stroke-style').value, 
+                    strokeWidth: parseFloat(document.getElementById('stroke-width-slider').value), 
+                    opacity: parseFloat(document.getElementById('opacity-slider').value) 
+                });
                 selectedObject = layerManager.getActiveObjects()[layerManager.getActiveObjects().length - 1];
-            } else if (currentTool === 'circle') {
-                layerManager.addObject({ type: 'circle', cx: startPos.x, cy: startPos.y, r: 0, fill: document.getElementById('fill-toggle').checked ? hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a) : 'transparent', stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a), strokeStyle: document.getElementById('stroke-style').value, strokeWidth: parseFloat(document.getElementById('stroke-width-slider').value), opacity: parseFloat(document.getElementById('opacity-slider').value) });
+                break;
+                
+            case 'circle':
+                layerManager.addObject({ 
+                    type: 'circle', 
+                    cx: startPos.x, 
+                    cy: startPos.y, 
+                    r: 0, 
+                    fill: document.getElementById('fill-toggle').checked ? hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a) : 'transparent', 
+                    stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a), 
+                    strokeStyle: document.getElementById('stroke-style').value, 
+                    strokeWidth: parseFloat(document.getElementById('stroke-width-slider').value), 
+                    opacity: parseFloat(document.getElementById('opacity-slider').value) 
+                });
                 selectedObject = layerManager.getActiveObjects()[layerManager.getActiveObjects().length - 1];
-            } else if (currentTool === 'text') {
+                break;
+                
+            case 'text':
                 const textInput = document.getElementById('text-input');
-                textInput.style.left = `${startPos.x}px`;
-                textInput.style.top = `${startPos.y}px`;
+                // Position text input based on zoom and pan
+                const textX = (canvasX + panOffset.x * zoomLevel);
+                const textY = (canvasY + panOffset.y * zoomLevel);
+                textInput.style.left = `${textX}px`;
+                textInput.style.top = `${textY}px`;
                 textInput.classList.remove('hidden');
                 textInput.focus();
+                
                 textInput.onblur = () => {
-                    layerManager.addObject({ type: 'text', text: textInput.value, x: startPos.x, y: startPos.y, fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a), stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a), strokeStyle: document.getElementById('stroke-style').value, strokeWidth: parseFloat(document.getElementById('stroke-width-slider').value), opacity: parseFloat(document.getElementById('opacity-slider').value) });
+                    if (textInput.value.trim() !== '') {
+                        layerManager.addObject({ 
+                            type: 'text', 
+                            text: textInput.value, 
+                            x: startPos.x, 
+                            y: startPos.y, 
+                            size: 16, 
+                            fill: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, currentColor.a), 
+                            stroke: hslToRgbString(currentColor.h, currentColor.s, currentColor.l, 0.5), 
+                            strokeStyle: document.getElementById('stroke-style').value, 
+                            strokeWidth: parseFloat(document.getElementById('stroke-width-slider').value), 
+                            opacity: parseFloat(document.getElementById('opacity-slider').value) 
+                        });
+                    }
                     textInput.value = '';
                     textInput.classList.add('hidden');
                     textInput.onblur = null;
                     selectedObject = null;
                     drawCanvas();
                 };
-            } else if (currentTool === 'select') {
-                selectedObject = layerManager.getVisibleObjects().findLast(obj => {
-                    if (obj.type === 'rect') {
-                        return e.offsetX >= Math.min(obj.x, obj.x + obj.width) && e.offsetX <= Math.max(obj.x, obj.x + obj.width) &&
-                               e.offsetY >= Math.min(obj.y, obj.y + obj.height) && e.offsetY <= Math.max(obj.y, obj.y + obj.height);
-                    } else if (obj.type === 'circle') {
-                        const dx = e.offsetX - obj.cx;
-                        const dy = e.offsetY - obj.cy;
-                        return dx * dx + dy * dy <= obj.r * obj.r;
-                    } else if (obj.type === 'path') {
-                        // Basic point-in-polygon check (can be improved)
-                        return obj.points.some(p => Math.abs(e.offsetX - p.x) < 5 && Math.abs(e.offsetY - p.y) < 5);
-                    } else if (obj.type === 'text') {
-                        const textWidth = document.getElementById('drawing-canvas').getContext('2d').measureText(obj.text).width;
-                        return e.offsetX >= obj.x && e.offsetX <= obj.x + textWidth && e.offsetY >= obj.y && e.offsetY <= obj.y + (obj.size || 16);
-                    } else if (obj.type === 'image') {
-                        return e.offsetX >= obj.x && e.offsetX <= obj.x + obj.width && e.offsetY >= obj.y && e.offsetY <= obj.y + obj.height;
+                
+                textInput.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        textInput.blur();
+                    } else if (e.key === 'Escape') {
+                        textInput.value = '';
+                        textInput.blur();
                     }
-                    return false;
+                };
+                break;
+                
+            case 'select':
+                // Convert world coordinates to user space for hit testing
+                selectedObject = layerManager.getVisibleObjects().findLast(obj => {
+                    // Check if object is in the current viewport
+                    const isInViewport = (
+                        obj.x >= -panOffset.x / zoomLevel && 
+                        obj.x <= (canvas.width - panOffset.x) / zoomLevel &&
+                        obj.y >= -panOffset.y / zoomLevel && 
+                        obj.y <= (canvas.height - panOffset.y) / zoomLevel
+                    );
+                    
+                    if (!isInViewport) return false;
+                    
+                    switch (obj.type) {
+                        case 'rect':
+                            return worldX >= Math.min(obj.x, obj.x + obj.width) && 
+                                   worldX <= Math.max(obj.x, obj.x + obj.width) &&
+                                   worldY >= Math.min(obj.y, obj.y + obj.height) && 
+                                   worldY <= Math.max(obj.y, obj.y + obj.height);
+                            
+                        case 'circle':
+                            const dx = worldX - obj.cx;
+                            const dy = worldY - obj.cy;
+                            return dx * dx + dy * dy <= obj.r * obj.r;
+                            
+                        case 'path':
+                            // Improved hit testing for paths
+                            return obj.points.some((p, i, points) => {
+                                // Check if close to a point
+                                if (Math.abs(worldX - p.x) < 5 / zoomLevel && Math.abs(worldY - p.y) < 5 / zoomLevel) {
+                                    return true;
+                                }
+                                
+                                // Check if close to a line segment
+                                if (i > 0) {
+                                    const p1 = points[i - 1];
+                                    const p2 = p;
+                                    
+                                    // Calculate distance from point to line segment
+                                    const A = worldX - p1.x;
+                                    const B = worldY - p1.y;
+                                    const C = p2.x - p1.x;
+                                    const D = p2.y - p1.y;
+                                    
+                                    const dot = A * C + B * D;
+                                    const lenSq = C * C + D * D;
+                                    let param = -1;
+                                    
+                                    if (lenSq !== 0) param = dot / lenSq;
+                                    
+                                    let xx, yy;
+                                    
+                                    if (param < 0) {
+                                        xx = p1.x;
+                                        yy = p1.y;
+                                    } else if (param > 1) {
+                                        xx = p2.x;
+                                        yy = p2.y;
+                                    } else {
+                                        xx = p1.x + param * C;
+                                        yy = p1.y + param * D;
+                                    }
+                                    
+                                    const dx = worldX - xx;
+                                    const dy = worldY - yy;
+                                    const distance = Math.sqrt(dx * dx + dy * dy);
+                                    
+                                    return distance < 5 / zoomLevel;
+                                }
+                                
+                                return false;
+                            });
+                            
+                        case 'text':
+                            const ctx = canvas.getContext('2d');
+                            ctx.font = `${obj.size || 16}px Inter`;
+                            const textWidth = ctx.measureText(obj.text).width;
+                            return worldX >= obj.x && 
+                                   worldX <= obj.x + textWidth / zoomLevel && 
+                                   worldY >= obj.y && 
+                                   worldY <= obj.y + (obj.size || 16) / zoomLevel;
+                            
+                        case 'image':
+                            return worldX >= obj.x && 
+                                   worldX <= obj.x + obj.width && 
+                                   worldY >= obj.y && 
+                                   worldY <= obj.y + obj.height;
+                            
+                        default:
+                            return false;
+                    }
                 });
+                
                 updatePropertiesPanel();
                 drawCanvas();
-            } else if (currentTool === 'eyedropper') {
-                const ctx = document.getElementById('drawing-canvas').getContext('2d');
-                const pixelData = ctx.getImageData(e.offsetX, e.offsetY, 1, 1).data;
-                currentColor = rgbToHslObject(pixelData[0], pixelData[1], pixelData[2]);
-                updateColorInputs();
-            }
+                break;
+                
+            case 'eyedropper':
+                const ctx = canvas.getContext('2d');
+                
+                // Convert mouse position to canvas position
+                const x = Math.floor(canvasX);
+                const y = Math.floor(canvasY);
+                
+                // Get pixel data at that position
+                try {
+                    const pixelData = ctx.getImageData(x, y, 1, 1).data;
+                    if (pixelData[3] > 0) { // Only pick if not fully transparent
+                        currentColor = rgbToHslObject(pixelData[0], pixelData[1], pixelData[2]);
+                        currentColor.a = pixelData[3] / 255;
+                        updateColorInputs();
+                        showSuccess('Color picked');
+                    }
+                } catch (e) {
+                    console.error('Error using eyedropper:', e);
+                    showError('Could not sample color at this position');
+                }
+                break;
+                
+            default:
+                // Pan the view in other cases
+                if (currentTool !== 'text') {
+                    canvas.style.cursor = 'grabbing';
+                }
+                break;
         }
+    }
 
-        function handleMouseMove(e) {
-            if (!isDrawing) return;
-            currentPos = { x: e.offsetX, y: e.offsetY };
-            if (currentTool === 'pen') {
+    function handleMouseMove(e) {
+        const canvas = document.getElementById('drawing-canvas');
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        const canvasX = (e.clientX - rect.left) * scaleX;
+        const canvasY = (e.clientY - rect.top) * scaleY;
+        
+        // Convert to world coordinates
+        const worldX = (canvasX - panOffset.x) / zoomLevel;
+        const worldY = (canvasY - panOffset.y) / zoomLevel;
+        
+        if (!isDrawing) {
+            // Update cursor based on what's under it (hover effect)
+            if (currentTool === 'select') {
+                const hitObject = layerManager.getVisibleObjects().findLast(obj => {
+                    // Simple hit testing for hover effect
+                    switch (obj.type) {
+                        case 'rect':
+                            return worldX >= Math.min(obj.x, obj.x + obj.width) && 
+                                   worldX <= Math.max(obj.x, obj.x + obj.width) &&
+                                   worldY >= Math.min(obj.y, obj.y + obj.height) && 
+                                   worldY <= Math.max(obj.y, obj.y + obj.height);
+                        case 'circle':
+                            const dx = worldX - obj.cx;
+                            const dy = worldY - obj.cy;
+                            return dx * dx + dy * dy <= obj.r * obj.r;
+                        // Add other cases as needed
+                        default:
+                            return false;
+                    }
+                });
+                
+                canvas.style.cursor = hitObject ? 'pointer' : 'default';
+            }
+            return;
+        }
+        
+        currentPos = { x: worldX, y: worldY };
+        
+        if (isPrecisionMode) {
+            // In precision mode, we slow down the movement
+            currentPos.x = startPos.x + (currentPos.x - startPos.x) * 0.3;
+            currentPos.y = startPos.y + (currentPos.y - startPos.y) * 0.3;
+        }
+        
+        switch (currentTool) {
+            case 'pen':
                 currentPath.push({ ...currentPos });
-                layerManager.getActiveObjects()[layerManager.getActiveObjects().length - 1].points = [...currentPath];
-            } else if (currentTool === 'rect') {
-                const obj = layerManager.getActiveObjects()[layerManager.getActiveObjects().length - 1];
-                obj.width = currentPos.x - startPos.x;
-                obj.height = currentPos.y - startPos.y;
-            } else if (currentTool === 'circle') {
-                const obj = layerManager.getActiveObjects()[layerManager.getActiveObjects().length - 1];
-                const dx = currentPos.x - startPos.x;
-                const dy = currentPos.y - startPos.y;
-                obj.r = Math.sqrt(dx * dx + dy * dy);
+                const activeObj = layerManager.getActiveObjects()[layerManager.getActiveObjects().length - 1];
+                if (activeObj) {
+                    activeObj.points = [...currentPath];
+                }
+                break;
+                
+            case 'rect':
+                const rectObj = layerManager.getActiveObjects()[layerManager.getActiveObjects().length - 1];
+                if (rectObj) {
+                    rectObj.width = currentPos.x - startPos.x;
+                    rectObj.height = currentPos.y - startPos.y;
+                }
+                break;
+                
+            case 'circle':
+                const circleObj = layerManager.getActiveObjects()[layerManager.getActiveObjects().length - 1];
+                if (circleObj) {
+                    const dx = currentPos.x - startPos.x;
+                    const dy = currentPos.y - startPos.y;
+                    circleObj.r = Math.sqrt(dx * dx + dy * dy);
+                }
+                break;
+                
+            case 'select':
+                if (selectedObject) {
+                    // Move the selected object
+                    const dx = currentPos.x - startPos.x;
+                    const dy = currentPos.y - startPos.y;
+                    
+                    switch (selectedObject.type) {
+                        case 'rect':
+                            selectedObject.x += dx;
+                            selectedObject.y += dy;
+                            break;
+                            
+                        case 'circle':
+                            selectedObject.cx += dx;
+                            selectedObject.cy += dy;
+                            break;
+                            
+                        case 'path':
+                            selectedObject.points = selectedObject.points.map(p => ({
+                                x: p.x + dx,
+                                y: p.y + dy
+                            }));
+                            break;
+                            
+                        case 'text':
+                            selectedObject.x += dx;
+                            selectedObject.y += dy;
+                            break;
+                            
+                        case 'image':
+                            selectedObject.x += dx;
+                            selectedObject.y += dy;
+                            break;
+                    }
+                    
+                    startPos = { ...currentPos };
+                }
+                break;
+                
+            default:
+                // Pan the view
+                if (isDrawing) {
+                    panOffset.x += (e.clientX - startPos.x) * scaleX;
+                    panOffset.y += (e.clientY - startPos.y) * scaleY;
+                    startPos = { x: e.clientX, y: e.clientY };
+                }
+                break;
+        }
+        
+        drawCanvas();
+    }
+
+    function handleMouseUp() {
+        if (!isDrawing) return;
+        
+        isDrawing = false;
+        startPos = null;
+        currentPos = null;
+        
+        document.getElementById('drawing-canvas').style.cursor = 
+            currentTool === 'text' ? 'text' : 
+            currentTool === 'eyedropper' ? 'crosshair' : 'default';
+        
+        if (currentTool !== 'text') {
+            saveState();
+        }
+    }
+
+    function handleTouchStart(e) {
+        if (!isTouchEnabled && e.touches.length === 1) {
+            e.preventDefault(); // Prevent default only in drawing mode
+            
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            
+            handleMouseDown(mouseEvent);
+        } else if (e.touches.length === 2) {
+            // Handle pinch zoom
+            e.preventDefault();
+            
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            lastPinchDistance = Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+            );
+        }
+    }
+
+    function handleTouchMove(e) {
+        if (!isTouchEnabled && e.touches.length === 1) {
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            
+            handleMouseMove(mouseEvent);
+        } else if (e.touches.length === 2) {
+            // Handle pinch zoom
+            e.preventDefault();
+            
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            const currentDistance = Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+            );
+            
+            if (lastPinchDistance > 0) {
+                const delta = currentDistance - lastPinchDistance;
+                const zoomFactor = 0.01;
+                
+                // Calculate center of pinch
+                const centerX = (touch1.clientX + touch2.clientX) / 2;
+                const centerY = (touch1.clientY + touch2.clientY) / 2;
+                
+                handleZoom(delta * zoomFactor, { x: centerX, y: centerY });
             }
-            drawCanvas();
+            
+            lastPinchDistance = currentDistance;
         }
+    }
 
-        function handleMouseUp() {
-            if (!isDrawing) return;
-            isDrawing = false;
-            startPos = null;
-            currentPos = null;
-            if (currentTool !== 'text') {
-                saveState();
-            }
+    function handleTouchEnd(e) {
+        if (e.touches.length === 0) {
+            handleMouseUp();
+            lastPinchDistance = 0;
+        } else if (e.touches.length === 1) {
+            // If moved from pinch to single touch
+            lastPinchDistance = 0;
         }
+    }
 
-        function handleColorWheelMouseDown(e) {
-            isColorDragging = true;
-            updateCurrentColorFromWheel(e.offsetX, e.offsetY);
-        }
+    function handleColorWheelMouseDown(e) {
+        isColorDragging = true;
+        updateCurrentColorFromWheel(e.offsetX, e.offsetY);
+    }
 
-        function handleColorWheelMouseMove(e) {
-            if (!isColorDragging) return;
-            updateCurrentColorFromWheel(e.offsetX, e.offsetY);
-        }
+    function handleColorWheelMouseMove(e) {
+        if (!isColorDragging) return;
+        updateCurrentColorFromWheel(e.offsetX, e.offsetY);
+    }
 
-        function handleColorWheelMouseUp() {
-            isColorDragging = false;
-            addToSwatches(hslToHex(currentColor.h, currentColor.s, currentColor.l));
-        }
+    function handleColorWheelMouseUp() {
+        isColorDragging = false;
+        addToSwatches(hslToHex(currentColor.h, currentColor.s, currentColor.l));
+    }
 
-        function updateCurrentColorFromWheel(x, y) {
-            const centerX = 50;
-            const centerY = 50;
-            const dx = x - centerX;
-            const dy = y - centerY;
-            const angleRad = Math.atan2(dy, dx);
-            let hue = (angleRad * 180 / Math.PI + 360) % 360;
-            const saturation = Math.min(100, Math.sqrt(dx * dx + dy * dy) * 2);
-            currentColor = { h: hue, s: saturation, l: currentColor.l, a: currentColor.a };
-            updateColorInputs();
-        }
+    function updateCurrentColorFromWheel(x, y) {
+        const centerX = 50;
+        const centerY = 50;
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const angleRad = Math.atan2(dy, dx);
+        let hue = (angleRad * 180 / Math.PI + 360) % 360;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const saturation = Math.min(100, distance * 2);
+        currentColor = { h: hue, s: saturation, l: currentColor.l, a: currentColor.a };
+        updateColorInputs();
+    }
 
-        function handleLightnessChange() {
-            currentColor.l = parseInt(this.value);
-            document.getElementById('lightness-value').textContent = `${this.value}%`;
-            this.setAttribute('aria-valuenow', this.value);
-            updateColorInputs();
-        }
+    function handleLightnessChange() {
+        currentColor.l = parseInt(this.value);
+        document.getElementById('lightness-value').textContent = `${this.value}%`;
+        this.setAttribute('aria-valuenow', this.value);
+        updateColorInputs();
+    }
 
-        function handleOpacityChange() {
-            currentColor.a = parseFloat(this.value);
-            document.getElementById('opacity-value').textContent = `${Math.round(this.value * 100)}%`;
-            this.setAttribute('aria-valuenow', this.value);
-            updateColorInputs();
-        }
+    function handleOpacityChange() {
+        currentColor.a = parseFloat(this.value);
+        document.getElementById('opacity-value').textContent = `${Math.round(this.value * 100)}%`;
+        this.setAttribute('aria-valuenow', this.value);
+        updateColorInputs();
+    }
 
-        function handleStrokeWidthChange() {
-            document.getElementById('stroke-width-value').textContent = `${this.value}px`;
-            this.setAttribute('aria-valuenow',
-this.value);
-        }
+    function handleStrokeWidthChange() {
+        document.getElementById('stroke-width-value').textContent = `${this.value}
+px`;
+        this.setAttribute('aria-valuenow', this.value);
+    }
 
-        function handleHexInput() {
-            const hex = this.value;
-            if (/^#?[0-9A-Fa-f]{3,6}$/.test(hex)) {
+    function handleHexInput() {
+        const hex = this.value;
+        if (/^#?[0-9A-Fa-f]{3,6}$/.test(hex)) {
+            try {
                 currentColor = { ...hexToHsl(hex), a: currentColor.a };
                 updateColorInputs();
+            } catch (error) {
+                console.error('Error parsing hex color:', error);
+                showError('Invalid hex color format');
             }
         }
+    }
 
-        function handleRgbInput() {
-            const rgbString = this.value.split(',').map(s => parseInt(s.trim()));
-            if (rgbString.length === 3 && rgbString.every(n => n >= 0 && n <= 255)) {
+    function handleRgbInput() {
+        const rgbString = this.value.split(',').map(s => parseInt(s.trim()));
+        if (rgbString.length === 3 && rgbString.every(n => !isNaN(n) && n >= 0 && n <= 255)) {
+            try {
                 currentColor = { ...rgbToHslObject(rgbString[0], rgbString[1], rgbString[2]), a: currentColor.a };
                 updateColorInputs();
+            } catch (error) {
+                console.error('Error parsing RGB color:', error);
+                showError('Invalid RGB color format');
             }
         }
+    }
 
-        function handleHslInput() {
-            const hslString = this.value.split(',').map(s => s.trim());
-            if (hslString.length === 3) {
+    function handleHslInput() {
+        const hslString = this.value.split(',').map(s => s.trim());
+        if (hslString.length === 3) {
+            try {
                 const h = parseInt(hslString[0]);
                 const s = parseInt(hslString[1].replace('%', ''));
                 const l = parseInt(hslString[2].replace('%', ''));
@@ -1117,144 +2272,342 @@ this.value);
                     currentColor = { h, s, l, a: currentColor.a };
                     updateColorInputs();
                 }
+            } catch (error) {
+                console.error('Error parsing HSL color:', error);
+                showError('Invalid HSL color format');
             }
         }
+    }
 
-        function handleNativePickerChange() {
+    function handleNativePickerChange() {
+        try {
             const hex = this.value;
             currentColor = { ...hexToHsl(hex), a: currentColor.a };
             updateColorInputs();
             addToSwatches(hex);
+        } catch (error) {
+            console.error('Error with color picker:', error);
+            showError('Error selecting color');
         }
+    }
 
-        function openSystemColorPicker() {
-            document.getElementById('native-picker').click();
+    function openSystemColorPicker() {
+        document.getElementById('native-picker').click();
+    }
+
+    function toggleFill() {
+        drawCanvas();
+    }
+
+    function changeTool(e) {
+        document.querySelectorAll('#drawing-tools .button').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        currentTool = e.target.id.replace('-tool', '');
+        
+        // Update cursor based on selected tool
+        const canvas = document.getElementById('drawing-canvas');
+        switch (currentTool) {
+            case 'eyedropper':
+                canvas.style.cursor = 'crosshair';
+                document.body.style.cursor = 'crosshair';
+                break;
+            case 'text':
+                canvas.style.cursor = 'text';
+                document.body.style.cursor = 'default';
+                break;
+            case 'select':
+                canvas.style.cursor = 'default';
+                document.body.style.cursor = 'default';
+                break;
+            default:
+                canvas.style.cursor = 'crosshair';
+                document.body.style.cursor = 'default';
+                break;
         }
+        
+        // Deselect object when changing tools
+        selectedObject = null;
+        updatePropertiesPanel();
+        drawCanvas();
+    }
 
-        function toggleFill() {
-            drawCanvas();
+    function addToSwatches(color) {
+        if (!color.startsWith('#')) {
+            color = '#' + color;
         }
-
-        function changeTool(e) {
-            document.querySelectorAll('#drawing-tools .button').forEach(btn => btn.classList.remove('active'));
-            e.target.classList.add('active');
-            currentTool = e.target.id.replace('-tool', '');
-            document.body.style.cursor = currentTool === 'eyedropper' ? 'crosshair' : 'default';
-            if (currentTool === 'text') {
-                document.getElementById('drawing-canvas').style.cursor = 'text';
-            } else {
-                document.getElementById('drawing-canvas').style.cursor = 'crosshair';
+        
+        if (!swatches.includes(color)) {
+            swatches.push(color);
+            if (swatches.length > SWATCH_LIMIT) {
+                swatches.shift();
             }
+            localStorage.setItem('swatches', JSON.stringify(swatches));
+            renderSwatches();
         }
+    }
 
-        function addToSwatches(color) {
-            if (!swatches.includes(color)) {
-                swatches.push(color);
-                if (swatches.length > SWATCH_LIMIT) {
-                    swatches.shift();
-                }
-                localStorage.setItem('swatches', JSON.stringify(swatches));
-                renderSwatches();
-            }
-        }
-
-        function renderSwatches() {
-            const swatchesContainer = document.getElementById('swatches');
-            swatchesContainer.innerHTML = '';
-            swatches.forEach(color => {
-                const swatch = document.createElement('div');
-                swatch.classList.add('swatch');
-                swatch.style.backgroundColor = color;
-                swatch.addEventListener('click', () => {
+    function renderSwatches() {
+        const swatchesContainer = document.getElementById('swatches');
+        swatchesContainer.innerHTML = '';
+        swatches.forEach(color => {
+            const swatch = document.createElement('div');
+            swatch.classList.add('swatch');
+            swatch.style.backgroundColor = color;
+            
+            // Add tooltip with color value
+            const tooltip = document.createElement('span');
+            tooltip.className = 'swatch-tooltip';
+            tooltip.textContent = color;
+            swatch.appendChild(tooltip);
+            
+            swatch.addEventListener('click', () => {
+                try {
                     currentColor = { ...hexToHsl(color), a: currentColor.a };
                     updateColorInputs();
-                });
-                swatchesContainer.appendChild(swatch);
+                    showSuccess('Color selected');
+                } catch (error) {
+                    console.error('Error selecting color from swatch:', error);
+                    showError('Error selecting color');
+                }
             });
+            swatchesContainer.appendChild(swatch);
+        });
+    }
+
+    function handleFileUpload() {
+        const file = this.files[0];
+        if (!file) return;
+        
+        const validation = securityUtils.validateFile(file);
+        if (!validation.valid) {
+            document.getElementById('error-message').textContent = validation.error;
+            document.getElementById('error-message').classList.remove('hidden');
+            return;
         }
+        
+        document.getElementById('loading-message').classList.remove('hidden');
+        document.getElementById('progress-bar').classList.remove('hidden');
+        document.getElementById('upload-instructions').classList.add('hidden');
+        document.getElementById('error-message').classList.add('hidden');
+        document.getElementById('confirmation-message').classList.add('hidden');
+        document.getElementById('thumbnail-preview').classList.add('hidden');
 
-        function handleFileUpload() {
-            const file = this.files[0];
-            if (file) {
-                if (!VALID_TYPES.includes(file.type)) {
-                    document.getElementById('error-message').textContent = 'Invalid file type. Only JPG, PNG, and SVG are allowed.';
-                    document.getElementById('error-message').classList.remove('hidden');
-                    return;
-                }
-                if (file.size > MAX_FILE_SIZE) {
-                    document.getElementById('error-message').textContent = 'File size exceeds the limit of 5MB.';
-                    document.getElementById('error-message').classList.remove('hidden');
-                    return;
-                }
-
-                document.getElementById('loading-message').classList.remove('hidden');
-                document.getElementById('progress-bar').classList.remove('hidden');
-                document.getElementById('upload-instructions').classList.add('hidden');
-                document.getElementById('error-message').classList.add('hidden');
-                document.getElementById('confirmation-message').classList.add('hidden');
-                document.getElementById('thumbnail-preview').classList.add('hidden');
-
-                const reader = new FileReader();
-                reader.onloadstart = () => {
-                    document.getElementById('progress-fill').style.width = '0%';
-                };
-                reader.onprogress = (event) => {
-                    if (event.lengthComputable) {
-                        const percentComplete = (event.loaded / event.total) * 100;
-                        document.getElementById('progress-fill').style.width = `${percentComplete}%`;
-                    }
-                };
-                reader.onload = async (event) => {
-                    document.getElementById('loading-message').classList.add('hidden');
-                    document.getElementById('progress-bar').classList.add('hidden');
-                    document.getElementById('confirmation-message').classList.remove('hidden');
-
-                    if (file.type === 'image/svg+xml') {
-                        const svgData = event.target.result;
-                        const img = new Image();
-                        img.onload = () => {
-                            layerManager.addObject({ type: 'image', image: img, x: 0, y: 0, width: img.width, height: img.height });
-                            drawCanvas();
-                            document.getElementById('canvas-section').classList.remove('hidden');
-                            document.getElementById('export-section').classList.remove('hidden');
-                        };
-                        img.src = svgData;
-                        document.getElementById('thumbnail-preview').src = 'data:image/svg+xml;base64,' + btoa(svgData);
-                        document.getElementById('thumbnail-preview').classList.remove('hidden');
-                    } else {
-                        const img = await loadImage(file);
-                        layerManager.addObject({ type: 'image', image: img, x: 0, y: 0, width: img.width, height: img.height });
-                        drawCanvas();
-                        document.getElementById('canvas-section').classList.remove('hidden');
-                        document.getElementById('export-section').classList.remove('hidden');
-                        document.getElementById('thumbnail-preview').src = img.src;
-                        document.getElementById('thumbnail-preview').classList.remove('hidden');
-                    }
-                };
-                reader.onerror = () => {
-                    document.getElementById('loading-message').classList.add('hidden');
-                    document.getElementById('progress-bar').classList.add('hidden');
-                    document.getElementById('error-message').textContent = 'Error loading file.';
-                    document.getElementById('error-message').classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
+        const reader = new FileReader();
+        reader.onloadstart = () => {
+            document.getElementById('progress-fill').style.width = '0%';
+        };
+        
+        reader.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                document.getElementById('progress-fill').style.width = `${percentComplete}%`;
             }
-        }
+        };
+        
+        reader.onload = async (event) => {
+            try {
+                document.getElementById('loading-message').classList.add('hidden');
+                document.getElementById('progress-bar').classList.add('hidden');
+                document.getElementById('confirmation-message').classList.remove('hidden');
 
-        function handleBrowseButtonClick() {
-            document.getElementById('file-upload').click();
-        }
+                if (file.type === 'image/svg+xml') {
+                    // Use Web Worker for SVG processing if available
+                    if (window.Worker && !isMobileDevice) {
+                        processSvgWithWorker(event.target.result);
+                    } else {
+                        processSvgDirectly(event.target.result);
+                    }
+                } else {
+                    const img = await loadImage(file);
+                    layerManager.addObject({ 
+                        type: 'image', 
+                        image: img, 
+                        x: 0, 
+                        y: 0, 
+                        width: img.width, 
+                        height: img.height,
+                        opacity: 1
+                    });
+                    drawCanvas();
+                    document.getElementById('canvas-section').classList.remove('hidden');
+                    document.getElementById('export-section').classList.remove('hidden');
+                    document.getElementById('thumbnail-preview').src = img.src;
+                    document.getElementById('thumbnail-preview').classList.remove('hidden');
+                }
+                
+                showSuccess('File processed successfully');
+            } catch (error) {
+                console.error('Error processing file:', error);
+                document.getElementById('loading-message').classList.add('hidden');
+                document.getElementById('progress-bar').classList.add('hidden');
+                document.getElementById('error-message').textContent = `Error processing file: ${error.message}`;
+                document.getElementById('error-message').classList.remove('hidden');
+            }
+        };
+        
+        reader.onerror = (error) => {
+            console.error('FileReader error:', error);
+            document.getElementById('loading-message').classList.add('hidden');
+            document.getElementById('progress-bar').classList.add('hidden');
+            document.getElementById('error-message').textContent = 'Error loading file.';
+            document.getElementById('error-message').classList.remove('hidden');
+        };
+        
+        reader.readAsDataURL(file);
+    }
 
-        function toggleSnapGrid() {
-            snapToGridEnabled = this.checked;
+    function processSvgWithWorker(svgData) {
+        if (activeWebWorker) {
+            activeWebWorker.terminate();
+        }
+        
+        activeWebWorker = createImageProcessingWorker();
+        
+        activeWebWorker.onmessage = function(e) {
+            const { status, result, error } = e.data;
+            
+            if (status === 'success') {
+                processSvgDirectly(result);
+            } else {
+                console.error('Worker error:', error);
+                showError('Error processing SVG: ' + error);
+                activeWebWorker.terminate();
+                activeWebWorker = null;
+            }
+        };
+        
+        activeWebWorker.onerror = function(error) {
+            console.error('Worker error:', error);
+            showError('Error in processing worker');
+            activeWebWorker.terminate();
+            activeWebWorker = null;
+            
+            // Fallback to direct processing
+            processSvgDirectly(svgData);
+        };
+        
+        // Send data to worker
+        activeWebWorker.postMessage({
+            operation: 'processSvg',
+            imageData: svgData,
+            options: {}
+        });
+    }
+
+    function processSvgDirectly(svgData) {
+        // Sanitize SVG content
+        const sanitizedSvg = securityUtils.sanitizeSvg(svgData);
+        
+        const img = new Image();
+        img.onload = () => {
+            layerManager.addObject({ 
+                type: 'image', 
+                image: img, 
+                x: 0, 
+                y: 0, 
+                width: img.width, 
+                height: img.height,
+                opacity: 1
+            });
             drawCanvas();
-        }
+            document.getElementById('canvas-section').classList.remove('hidden');
+            document.getElementById('export-section').classList.remove('hidden');
+        };
+        img.onerror = (error) => {
+            console.error('Error loading SVG image:', error);
+            showError('Error loading SVG image');
+        };
+        img.src = sanitizedSvg;
+        
+        document.getElementById('thumbnail-preview').src = sanitizedSvg;
+        document.getElementById('thumbnail-preview').classList.remove('hidden');
+    }
 
-        function exportSVG() {
+    function handleBrowseButtonClick() {
+        document.getElementById('file-upload').click();
+    }
+
+    function toggleSnapGrid() {
+        snapToGridEnabled = this.checked;
+        drawCanvas();
+    }
+
+    function handleZoom(delta, position = null) {
+        const canvas = document.getElementById('drawing-canvas');
+        const oldZoom = zoomLevel;
+        
+        // Calculate new zoom level
+        zoomLevel = Math.max(0.1, Math.min(10, zoomLevel + delta));
+        
+        // If position is provided, zoom towards that point
+        if (position) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const canvasX = (position.x - rect.left) * scaleX;
+            const canvasY = (position.y - rect.top) * scaleY;
+            
+            // Adjust pan offset to zoom towards the point
+            panOffset.x = canvasX - (canvasX - panOffset.x) * (zoomLevel / oldZoom);
+            panOffset.y = canvasY - (canvasY - panOffset.y) * (zoomLevel / oldZoom);
+        }
+        
+        drawCanvas();
+    }
+
+    function handleWheelZoom(e) {
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            const delta = -e.deltaY * 0.001;
+            handleZoom(delta, { x: e.clientX, y: e.clientY });
+        }
+    }
+
+    function toggleTouchDrawing() {
+        isTouchEnabled = !isTouchEnabled;
+        const button = document.getElementById('toggle-touch-drawing');
+        button.classList.toggle('active', isTouchEnabled);
+        button.textContent = isTouchEnabled ? 'Pan Mode' : 'Touch Drawing';
+        showSuccess(isTouchEnabled ? 'Drawing mode enabled' : 'Pan mode enabled');
+    }
+
+    function togglePrecisionMode() {
+        isPrecisionMode = !isPrecisionMode;
+        const button = document.getElementById('touch-precision');
+        button.classList.toggle('active', isPrecisionMode);
+        showSuccess(isPrecisionMode ? 'Precision mode enabled' : 'Precision mode disabled');
+        drawCanvas();
+    }
+
+    function resetZoom() {
+        zoomLevel = 1;
+        panOffset = { x: 0, y: 0 };
+        drawCanvas();
+        showSuccess('View reset');
+    }
+
+    function exportSVG() {
+        try {
             const svgNS = 'http://www.w3.org/2000/svg';
             const svg = document.createElementNS(svgNS, 'svg');
             svg.setAttribute('width', CANVAS_WIDTH);
             svg.setAttribute('height', CANVAS_HEIGHT);
+            svg.setAttribute('xmlns', svgNS);
+            
+            // Add metadata
+            const metadata = document.createElementNS(svgNS, 'metadata');
+            metadata.textContent = 'Created with Doppleit Vector v2 Pro';
+            svg.appendChild(metadata);
+            
+            // Add background if not transparent
+            if (document.body.classList.contains('theme-light')) {
+                const rect = document.createElementNS(svgNS, 'rect');
+                rect.setAttribute('width', '100%');
+                rect.setAttribute('height', '100%');
+                rect.setAttribute('fill', '#ffffff');
+                svg.appendChild(rect);
+            }
 
             layerManager.getVisibleObjects().forEach(obj => {
                 if (obj.type === 'path') {
@@ -1320,11 +2673,17 @@ this.value);
             });
 
             const serializer = new XMLSerializer();
-            const svgString = serializer.serializeToString(svg);
+            let svgString = serializer.serializeToString(svg);
+            
+            // Further sanitize output
+            svgString = securityUtils.sanitizeSvg(svgString);
+            
             document.getElementById('svg-output').textContent = svgString;
             document.getElementById('debug-panel').style.display = 'block';
 
-            const filename = document.getElementById('filename').value + '.svg';
+            let filename = document.getElementById('filename').value;
+            filename = securityUtils.sanitizeFilename(filename) + '.svg';
+            
             const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -1334,15 +2693,26 @@ this.value);
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+            
+            showSuccess('SVG exported successfully');
+        } catch (error) {
+            console.error('Error exporting SVG:', error);
+            showError('Error exporting SVG: ' + error.message);
         }
+    }
 
-        function exportPNG() {
+    function exportPNG() {
+        try {
             const canvas = document.createElement('canvas');
             canvas.width = CANVAS_WIDTH;
             canvas.height = CANVAS_HEIGHT;
             const ctx = canvas.getContext('2d');
+            
+            // Fill background based on theme
             ctx.fillStyle = getComputedStyle(document.body).backgroundColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw all objects
             layerManager.getVisibleObjects().forEach(obj => {
                 ctx.globalAlpha = obj.opacity || 1;
                 ctx.fillStyle = document.getElementById('fill-toggle').checked ? obj.fill : 'transparent';
@@ -1362,15 +2732,24 @@ this.value);
                     case 'path':
                         ctx.beginPath();
                         obj.points.forEach((p, i) => {
-                            ctx.lineTo(p.x, p.y);
-                            if (i === 0) ctx.moveTo(p.x, p.y);
+                            const x = p.x;
+                            const y = p.y;
+                            if (i === 0) {
+                                ctx.moveTo(x, y);
+                            } else {
+                                ctx.lineTo(x, y);
+                            }
                         });
                         ctx.stroke();
                         if (document.getElementById('fill-toggle').checked && obj.fill !== 'transparent') ctx.fill();
                         break;
                     case 'rect':
-                        ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
-                        ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+                        const x = Math.min(obj.x, obj.x + obj.width);
+                        const y = Math.min(obj.y, obj.y + obj.height);
+                        const width = Math.abs(obj.width);
+                        const height = Math.abs(obj.height);
+                        ctx.fillRect(x, y, width, height);
+                        ctx.strokeRect(x, y, width, height);
                         break;
                     case 'circle':
                         ctx.beginPath();
@@ -1392,25 +2771,62 @@ this.value);
                         break;
                 }
             });
-            const filename = document.getElementById('filename').value + '.png';
-            const url = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            
+            let filename = document.getElementById('filename').value;
+            filename = securityUtils.sanitizeFilename(filename) + '.png';
+            
+            // Convert to blob and download
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                showSuccess('PNG exported successfully');
+            }, 'image/png');
+        } catch (error) {
+            console.error('Error exporting PNG:', error);
+            showError('Error exporting PNG: ' + error.message);
         }
+    }
 
-        function saveProject() {
+    function saveProject() {
+        try {
+            // Create a deep copy of layer data without circular references
+            const layersCopy = layerManager.layers.map(layer => {
+                const layerCopy = { ...layer };
+                layerCopy.objects = layer.objects.map(obj => {
+                    // Handle objects with image data
+                    if (obj.type === 'image' && obj.image) {
+                        return {
+                            ...obj,
+                            imageSrc: obj.image.src,
+                            // Remove the actual image object to avoid circular reference
+                            image: null
+                        };
+                    }
+                    return { ...obj };
+                });
+                return layerCopy;
+            });
+            
             const projectData = {
-                layers: layerManager.layers,
+                layers: layersCopy,
                 settings: settings,
                 swatches: swatches,
-                currentColor: currentColor
+                currentColor: currentColor,
+                version: '2.0' // Project file version
             };
+            
             const jsonString = JSON.stringify(projectData);
-            const filename = document.getElementById('filename').value + '.json';
+            
+            let filename = document.getElementById('filename').value;
+            filename = securityUtils.sanitizeFilename(filename) + '.json';
+            
             const blob = new Blob([jsonString], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -1420,150 +2836,294 @@ this.value);
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+            
+            showSuccess('Project saved successfully');
+        } catch (error) {
+            console.error('Error saving project:', error);
+            showError('Error saving project: ' + error.message);
         }
+    }
 
-        function loadProject() {
-            document.getElementById('project-upload').click();
-        }
+    function loadProject() {
+        document.getElementById('project-upload').click();
+    }
 
-        function handleProjectUpload(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    try {
-                        const projectData = JSON.parse(event.target.result);
-                        layerManager.layers = projectData.layers.map(layerData => ({ ...layerData, objects: layerData.objects.map(o => ({ ...o })) }));
-                        settings = projectData.settings || { theme: 'dark', highContrast: false };
-                        swatches = projectData.swatches || [];
-                        currentColor = projectData.currentColor || { h: 32, s: 100, l: 44, a: 1 };
-                        localStorage.setItem('settings', JSON.stringify(settings));
-                        localStorage.setItem('swatches', JSON.stringify(swatches));
-                        applySettings();
-                        renderSwatches();
-                        updateColorInputs();
-                        updateLayerSelect();
-                        drawCanvas();
-                        document.getElementById('canvas-section').classList.remove('hidden');
-                        document.getElementById('export-section').classList.remove('hidden');
-                    } catch (error) {
-                        alert('Error loading project file.');
-                        console.error('Error loading project:', error);
-                    }
-                };
-                reader.readAsText(file);
-                e.target.value = null; // Reset file input
+    function handleProjectUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const projectData = JSON.parse(event.target.result);
+                
+                // Validate project data
+                if (!projectData.layers || !Array.isArray(projectData.layers)) {
+                    throw new Error('Invalid project file');
+                }
+                
+                // Process layers, handling image data
+                const processedLayers = await Promise.all(projectData.layers.map(async (layerData) => {
+                    const processedObjects = await Promise.all(layerData.objects.map(async (obj) => {
+                        if (obj.type === 'image' && obj.imageSrc) {
+                            // Load image from src
+                            try {
+                                const image = new Image();
+                                image.src = obj.imageSrc;
+                                await new Promise((resolve, reject) => {
+                                    image.onload = resolve;
+                                    image.onerror = reject;
+                                });
+                                return { ...obj, image };
+                            } catch (imgError) {
+                                console.error('Error loading image:', imgError);
+                                return obj; // Return object without image
+                            }
+                        }
+                        return obj;
+                    }));
+                    
+                    return { ...layerData, objects: processedObjects };
+                }));
+                
+                layerManager.layers = processedLayers;
+                settings = projectData.settings || { theme: 'dark', highContrast: false, autosave: true };
+                swatches = projectData.swatches || [];
+                currentColor = projectData.currentColor || { h: 32, s: 100, l: 44, a: 1 };
+                
+                localStorage.setItem('settings', JSON.stringify(settings));
+                localStorage.setItem('swatches', JSON.stringify(swatches));
+                
+                applySettings();
+                renderSwatches();
+                updateColorInputs();
+                updateLayerSelect();
+                drawCanvas();
+                
+                document.getElementById('canvas-section').classList.remove('hidden');
+                document.getElementById('export-section').classList.remove('hidden');
+                
+                showSuccess('Project loaded successfully');
+            } catch (error) {
+                console.error('Error loading project file:', error);
+                showError('Error loading project: ' + error.message);
             }
-        }
+        };
+        
+        reader.onerror = (error) => {
+            console.error('Error reading project file:', error);
+            showError('Error reading project file');
+        };
+        
+        reader.readAsText(file);
+        e.target.value = null; // Reset file input
+    }
 
-        function updateLayerSelect() {
-            const layerSelect = document.getElementById('layer-select');
-layerSelect.innerHTML = '';
-            layerManager.layers.forEach((layer, index) => {
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = layer.name;
-                option.selected = index === layerManager.currentLayerIndex;
-                layerSelect.appendChild(option);
-            });
-        }
+    function handleLayerSelectChange() {
+        layerManager.setActiveLayer(parseInt(this.value));
+    }
 
-        function handleLayerSelectChange() {
-            layerManager.setActiveLayer(parseInt(this.value));
-        }
+    function addLayer() {
+        layerManager.addLayer();
+    }
 
-        function addLayer() {
-            layerManager.addLayer();
-        }
+    function toggleLayerVisibility() {
+        const index = parseInt(document.getElementById('layer-select').value);
+        layerManager.toggleVisibility(index);
+    }
 
-        function toggleLayerVisibility() {
-            const index = parseInt(document.getElementById('layer-select').value);
-            layerManager.toggleVisibility(index);
-        }
+    function toggleLayerLock() {
+        const index = parseInt(document.getElementById('layer-select').value);
+        layerManager.toggleLock(index);
+    }
 
-        function toggleLayerLock() {
-            const index = parseInt(document.getElementById('layer-select').value);
-            layerManager.toggleLock(index);
-        }
+    function applySettings() {
+        document.documentElement.setAttribute('data-theme', settings.theme);
+        document.documentElement.setAttribute('data-high-contrast', settings.highContrast);
+        document.getElementById('autosave-toggle').checked = settings.autosave;
+    }
 
-        function applySettings() {
-            document.documentElement.setAttribute('data-theme', settings.theme);
-            document.documentElement.setAttribute('data-high-contrast', settings.highContrast);
-        }
+    function toggleTheme() {
+        settings.theme = settings.theme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('settings', JSON.stringify(settings));
+        applySettings();
+        drawCanvas();
+    }
 
-        function toggleTheme() {
-            settings.theme = settings.theme === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('settings', JSON.stringify(settings));
-            applySettings();
-        }
+    function toggleHighContrast() {
+        settings.highContrast = !settings.highContrast;
+        localStorage.setItem('settings', JSON.stringify(settings));
+        applySettings();
+        drawCanvas();
+    }
 
-        function toggleHighContrast() {
-            settings.highContrast = !settings.highContrast;
-            localStorage.setItem('settings', JSON.stringify(settings));
-            applySettings();
+    function toggleAutosave() {
+        settings.autosave = this.checked;
+        localStorage.setItem('settings', JSON.stringify(settings));
+        
+        if (settings.autosave) {
+            if (!autosaveInterval) {
+                autosaveInterval = setInterval(autoSaveProject, AUTOSAVE_INTERVAL);
+            }
+            showSuccess('Autosave enabled');
+        } else {
+            if (autosaveInterval) {
+                clearInterval(autosaveInterval);
+                autosaveInterval = null;
+            }
+            showSuccess('Autosave disabled');
         }
+    }
 
-        function resetSession() {
+    function resetSession() {
+        if (confirm('Are you sure you want to reset the session? All unsaved work will be lost.')) {
             localStorage.removeItem('settings');
             localStorage.removeItem('swatches');
-            settings = { theme: 'dark', highContrast: false };
+            localStorage.removeItem('doppleitVectorAutosave');
+            
+            settings = { theme: 'dark', highContrast: false, autosave: true };
             swatches = [];
             currentColor = { h: 32, s: 100, l: 44, a: 1 };
             layerManager = new LayerManager();
+            zoomLevel = 1;
+            panOffset = { x: 0, y: 0 };
             undoStack = [JSON.stringify([{ objects: [], visible: true, locked: false, name: 'Layer 1' }])];
             redoStack = [];
+            
             applySettings();
             renderSwatches();
             updateColorInputs();
             updateLayerSelect();
             drawCanvas();
+            
             document.getElementById('canvas-section').classList.add('hidden');
             document.getElementById('export-section').classList.add('hidden');
+            
+            showSuccess('Session reset successfully');
         }
+    }
 
-        function toggleDebugPanel() {
-            const debugPanel = document.getElementById('debug-panel');
-            debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
-        }
+    function toggleDebugPanel() {
+        const debugPanel = document.getElementById('debug-panel');
+        debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+    }
 
-        function closeDebugPanel() {
-            document.getElementById('debug-panel').style.display = 'none';
-        }
+    function closeDebugPanel() {
+        document.getElementById('debug-panel').style.display = 'none';
+    }
 
-        function toggleHelpModal() {
-            const helpModal = document.getElementById('help-modal');
-            helpModal.style.display = helpModal.style.display === 'none' ? 'block' : 'none';
-        }
+    function toggleHelpModal() {
+        const helpModal = document.getElementById('help-modal');
+        helpModal.style.display = helpModal.style.display === 'none' ? 'block' : 'none';
+    }
 
-        function closeHelpModal() {
-            document.getElementById('help-modal').style.display = 'none';
-        }
+    function closeHelpModal() {
+        document.getElementById('help-modal').style.display = 'none';
+    }
 
-        function deleteSelectedObject() {
-            if (selectedObject) {
+    function deleteSelectedObject() {
+        if (selectedObject) {
+            try {
                 const layerIndex = layerManager.layers.findIndex(layer => layer.objects.includes(selectedObject));
-                if (layerIndex !== -1) {
+                if (layerIndex !== -1 && !layerManager.layers[layerIndex].locked) {
                     const objectIndex = layerManager.layers[layerIndex].objects.indexOf(selectedObject);
-                    layerManager.deleteObject(objectIndex);
+                    layerManager.layers[layerIndex].objects.splice(objectIndex, 1);
                     selectedObject = null;
                     updatePropertiesPanel();
+                    saveState();
                     drawCanvas();
+                    showSuccess('Object deleted');
+                } else if (layerManager.layers[layerIndex].locked) {
+                    showError("Can't delete object from locked layer");
                 }
+            } catch (error) {
+                console.error('Error deleting object:', error);
+                showError('Error deleting object');
+            }
+        } else {
+            showError('No object selected');
+        }
+    }
+
+    function clearCanvas() {
+        if (confirm('Are you sure you want to clear the canvas? This cannot be undone.')) {
+            layerManager.layers.forEach(layer => {
+                if (!layer.locked) {
+                    layer.objects = [];
+                }
+            });
+            selectedObject = null;
+            updatePropertiesPanel();
+            saveState();
+            drawCanvas();
+            showSuccess('Canvas cleared');
+        }
+    }
+
+    // Handle drag-and-drop file uploads
+    function setupDragAndDrop() {
+        const uploadArea = document.getElementById('upload-area');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.add('dragging');
+        });
+        
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('dragging');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('dragging');
+            
+            if (e.dataTransfer.files.length) {
+                const fileInput = document.getElementById('file-upload');
+                fileInput.files = e.dataTransfer.files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        });
+    }
+
+    // Initialize event listeners
+    function initializeEventListeners() {
+        // Set up browser compatibility fallbacks
+        setupCompatibilityFallbacks();
+        
+        // Canvas drawing events
+        const canvas = document.getElementById('drawing-canvas');
+        const canvasEventOptions = supportsPassiveListeners ? { passive: false } : false;
+        
+        if (supportsPointerEvents) {
+            canvas.addEventListener('pointerdown', handleMouseDown);
+            document.addEventListener('pointermove', handleMouseMove);
+            document.addEventListener('pointerup', handleMouseUp);
+        } else {
+            canvas.addEventListener('mousedown', handleMouseDown);
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            
+            if (supportsTouch) {
+                canvas.addEventListener('touchstart', handleTouchStart, canvasEventOptions);
+                document.addEventListener('touchmove', handleTouchMove, canvasEventOptions);
+                document.addEventListener('touchend', handleTouchEnd);
             }
         }
-
-        document.getElementById('color-wheel').addEventListener('mousedown', handleColorWheelMouseDown);
+        
+        // Add wheel event for zoom
+        canvas.addEventListener('wheel', handleWheelZoom, canvasEventOptions);
+        
+        // Color wheel events
+        const colorWheel = document.getElementById('color-wheel');
+        colorWheel.addEventListener('mousedown', handleColorWheelMouseDown);
         document.addEventListener('mousemove', handleColorWheelMouseMove);
         document.addEventListener('mouseup', handleColorWheelMouseUp);
-
-        document.getElementById('drawing-canvas').addEventListener('mousedown', handleMouseDown);
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-
-        document.querySelectorAll('#drawing-tools .button').forEach(button => {
-            button.addEventListener('click', changeTool);
-        });
-
+        
+        // Color control events
         document.getElementById('lightness-slider').addEventListener('input', handleLightnessChange);
         document.getElementById('opacity-slider').addEventListener('input', handleOpacityChange);
         document.getElementById('stroke-width-slider').addEventListener('input', handleStrokeWidthChange);
@@ -1573,18 +3133,42 @@ layerSelect.innerHTML = '';
         document.getElementById('native-picker').addEventListener('change', handleNativePickerChange);
         document.getElementById('system-picker').addEventListener('click', openSystemColorPicker);
         document.getElementById('fill-toggle').addEventListener('change', toggleFill);
+        
+        // Drawing tool events
+        document.querySelectorAll('#drawing-tools .button').forEach(button => {
+            button.addEventListener('click', changeTool);
+            button.addEventListener('click', createRipple);
+        });
+        
+        // File handling events
         document.getElementById('file-upload').addEventListener('change', handleFileUpload);
         document.getElementById('browse-button').addEventListener('click', handleBrowseButtonClick);
+        document.getElementById('browse-button').addEventListener('click', createRipple);
+        
+        // Canvas controls
         document.getElementById('snap-grid').addEventListener('change', toggleSnapGrid);
+        
+        // Mobile controls
+        document.getElementById('zoom-in').addEventListener('click', () => handleZoom(0.1));
+        document.getElementById('zoom-out').addEventListener('click', () => handleZoom(-0.1));
+        document.getElementById('reset-zoom').addEventListener('click', resetZoom);
+        document.getElementById('toggle-touch-drawing').addEventListener('click', toggleTouchDrawing);
+        document.getElementById('touch-precision').addEventListener('click', togglePrecisionMode);
+        
+        // Export events
         document.getElementById('export-svg').addEventListener('click', exportSVG);
         document.getElementById('export-png').addEventListener('click', exportPNG);
         document.getElementById('save-project').addEventListener('click', saveProject);
         document.getElementById('load-project').addEventListener('click', loadProject);
         document.getElementById('project-upload').addEventListener('change', handleProjectUpload);
+        
+        // Layer events
         document.getElementById('layer-select').addEventListener('change', handleLayerSelectChange);
         document.getElementById('add-layer').addEventListener('click', addLayer);
         document.getElementById('toggle-layer-visibility').addEventListener('click', toggleLayerVisibility);
         document.getElementById('toggle-layer-lock').addEventListener('click', toggleLayerLock);
+        
+        // Settings events
         document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
         document.getElementById('high-contrast-toggle').addEventListener('click', toggleHighContrast);
         document.getElementById('reset-session').addEventListener('click', resetSession);
@@ -1592,34 +3176,103 @@ layerSelect.innerHTML = '';
         document.getElementById('close-debug').addEventListener('click', closeDebugPanel);
         document.getElementById('help-toggle').addEventListener('click', toggleHelpModal);
         document.getElementById('close-help').addEventListener('click', closeHelpModal);
+        document.getElementById('autosave-toggle').addEventListener('change', toggleAutosave);
+        
+        // Object manipulation events
         document.getElementById('delete').addEventListener('click', deleteSelectedObject);
-
+        document.getElementById('clear-canvas').addEventListener('click', clearCanvas);
+        
+        // Add ripple effect to all buttons
+        document.querySelectorAll('.button').forEach(button => {
+            button.addEventListener('click', createRipple);
+        });
+        
+        // Setup drag-and-drop
+        setupDragAndDrop();
+        
+        // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
+            // Don't handle shortcuts if text input is active
+            if (document.activeElement === document.getElementById('text-input') ||
+                document.activeElement.tagName === 'INPUT' || 
+                document.activeElement.tagName === 'SELECT') {
+                return;
+            }
+            
             if (e.ctrlKey && e.key === 'z') {
+                e.preventDefault();
                 undo();
             } else if (e.ctrlKey && e.key === 'y') {
+                e.preventDefault();
                 redo();
             } else if (e.key === 'Escape') {
                 selectedObject = null;
                 updatePropertiesPanel();
                 drawCanvas();
-            } else if (document.activeElement !== document.getElementById('text-input')) {
+            } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                deleteSelectedObject();
+            } else {
                 switch (e.key) {
                     case '1': document.getElementById('pen-tool').click(); break;
                     case '2': document.getElementById('rect-tool').click(); break;
                     case '3': document.getElementById('circle-tool').click(); break;
                     case '4': document.getElementById('text-tool').click(); break;
-                    case 's': document.getElementById('select-tool').click(); break;
-                    case 'Delete': deleteSelectedObject(); break;
+                    case 's': case 'S': document.getElementById('select-tool').click(); break;
                 }
             }
         });
+    }
 
+    // Application initialization
+    function initializeApp() {
+        console.log('Initializing Doppleit Vector v2 Pro...');
+        
+        // Check for localStorage support
+        let storageAvailable = false;
+        try {
+            const test = '__storage_test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+            storageAvailable = true;
+        } catch (e) {
+            console.warn('LocalStorage not available. Some features may not work correctly.');
+        }
+        
+        // Set up autosave if enabled
+        if (storageAvailable && settings.autosave) {
+            autosaveInterval = setInterval(autoSaveProject, AUTOSAVE_INTERVAL);
+            
+            // Try to load autosaved project
+            if (localStorage.getItem('doppleitVectorAutosave')) {
+                const loadAutosave = confirm('An autosaved project was found. Would you like to load it?');
+                if (loadAutosave) {
+                    loadAutosavedProject();
+                }
+            }
+        }
+        
+        // Set up fallback mechanism for unsupported browsers
+        if (isMobileDevice) {
+            document.getElementById('mobile-controls').style.display = 'flex';
+        }
+        
+        // Initialize UI
         applySettings();
         renderSwatches();
         updateColorInputs();
         updateLayerSelect();
         drawCanvas();
-    </script>
-</body>
-</html>
+        
+        // Set up event listeners
+        initializeEventListeners();
+        
+        console.log('Doppleit Vector v2 Pro initialized successfully!');
+    }
+
+    // Initialize the application when DOM is fully loaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    } else {
+        initializeApp();
+    }
+</script>
